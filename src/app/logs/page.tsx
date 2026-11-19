@@ -93,37 +93,36 @@ export default function DailyLogsPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#141714]">
-            Daily Ranch Log
-          </h1>
-          <p className="text-sm font-bold text-[#474E47]">
-            Unified voice & field activity feed
+          <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-[#767C77]">
+            Field Activity Feed
           </p>
+          <h1 className="text-2xl sm:text-[28px] font-bold tracking-[-0.025em] text-[#111312] mt-0.5">
+            Daily Log
+          </h1>
         </div>
 
         <button
           type="button"
           id="add-log-btn"
           onClick={() => setAddOpen(true)}
-          className="min-h-[50px] px-4 inline-flex items-center gap-2 rounded-xl bg-[#1B4D2E] hover:bg-[#133922] text-white font-extrabold text-sm sm:text-base border-2 border-[#141714] shadow-[0_2px_0_#141714] active:translate-y-0.5 transition shrink-0"
+          className="min-h-[44px] px-4 inline-flex items-center gap-1.5 rounded-lg bg-[#173324] hover:bg-[#0F2419] text-white font-semibold text-sm transition shrink-0"
         >
-          <Plus className="w-5 h-5 stroke-[2.5]" />
+          <Plus className="w-4 h-4 stroke-[2.25]" />
           <span>Log Activity</span>
         </button>
       </div>
 
       {/* Category Filter Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 -mx-4 px-4">
         <button
           type="button"
           onClick={() => setCategory('ALL')}
-          className={`min-h-[44px] px-4 rounded-xl font-extrabold text-sm whitespace-nowrap border-2 transition shrink-0 ${
+          className={`min-h-[38px] px-3.5 rounded-lg font-semibold text-xs whitespace-nowrap border transition shrink-0 ${
             category === 'ALL'
-              ? 'bg-[#141714] text-white border-[#141714]'
-              : 'bg-white text-[#141714] border-[#CFC8BA] hover:border-[#141714]'
+              ? 'bg-[#111312] text-[#F5F4F0] border-[#111312]'
+              : 'bg-white text-[#525753] border-[#E2E0D9] hover:border-[#C9C6BC] hover:text-[#111312]'
           }`}
         >
           All
@@ -133,10 +132,10 @@ export default function DailyLogsPage() {
             key={cat}
             type="button"
             onClick={() => setCategory(cat)}
-            className={`min-h-[44px] px-4 rounded-xl font-extrabold text-sm whitespace-nowrap border-2 transition shrink-0 ${
+            className={`min-h-[38px] px-3.5 rounded-lg font-semibold text-xs whitespace-nowrap border transition shrink-0 ${
               category === cat
-                ? 'bg-[#141714] text-white border-[#141714]'
-                : 'bg-white text-[#141714] border-[#CFC8BA] hover:border-[#141714]'
+                ? 'bg-[#111312] text-[#F5F4F0] border-[#111312]'
+                : 'bg-white text-[#525753] border-[#E2E0D9] hover:border-[#C9C6BC] hover:text-[#111312]'
             }`}
           >
             {LOG_CATEGORY_LABELS[cat]}
@@ -144,73 +143,70 @@ export default function DailyLogsPage() {
         ))}
       </div>
 
-      {/* Chronological Timeline Grouped by Date */}
       {loading && (
-        <div className="field-card p-6 text-center font-bold text-[#474E47]">
+        <div className="field-card p-6 text-center text-sm font-medium text-[#767C77]">
           Loading ranch logs...
         </div>
       )}
 
       {!loading && groupedLogs.length === 0 && (
-        <div className="field-card p-8 text-center space-y-2">
-          <p className="text-lg font-extrabold text-[#141714]">No logs in this category</p>
-          <p className="text-sm font-medium text-[#474E47]">
-            Speak to Instinct AI or tap &ldquo;+ Log Activity&rdquo; to add an entry.
+        <div className="field-card p-8 text-center space-y-1">
+          <p className="text-base font-semibold text-[#111312]">No entries in this category</p>
+          <p className="text-xs text-[#767C77]">
+            Log via Instinct AI or add a manual activity entry.
           </p>
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-5">
         {groupedLogs.map((group) => (
-          <section key={group.heading} className="space-y-2.5">
-            <div className="sticky top-[64px] z-10 py-1.5 bg-[#F4F1EA]/95 backdrop-blur-xs">
-              <h2 className="inline-flex items-center px-3 py-1 rounded-lg bg-[#141714] text-white text-xs font-extrabold uppercase tracking-wider">
-                {group.heading}
-              </h2>
-            </div>
+          <section key={group.heading} className="space-y-2">
+            <h2 className="text-[11px] font-bold uppercase tracking-[0.09em] text-[#767C77] px-0.5">
+              {group.heading}
+            </h2>
 
-            <div className="space-y-3">
+            <div className="field-card divide-y divide-[#ECEAE4] overflow-hidden">
               {group.items.map((log) => (
-                <article key={log.id} className="field-card p-4 space-y-3">
+                <article key={log.id} className="p-4 space-y-2.5 bg-white">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
                       <LogCategoryBadge category={log.category} />
                       {log.raw_transcript && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#141714] text-[#FEF08A] text-[11px] font-extrabold uppercase">
-                          <Mic className="w-3 h-3" /> Instinct AI
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#111312] text-[#F5F4F0] text-[10px] font-semibold uppercase tracking-wider">
+                          <Mic className="w-2.5 h-2.5" /> AI Voice
                         </span>
                       )}
                     </div>
-                    <span className="font-mono text-xs font-bold text-[#474E47]">
+                    <span className="font-mono text-[11px] text-[#767C77]">
                       {formatTime(log.timestamp)}
                     </span>
                   </div>
 
-                  <p className="text-base font-semibold leading-snug text-[#141714]">
+                  <p className="text-sm sm:text-[15px] font-medium leading-snug text-[#111312]">
                     {log.summary}
                   </p>
 
                   {log.raw_transcript && (
                     <details className="text-xs">
-                      <summary className="cursor-pointer font-extrabold text-[#474E47] hover:text-[#141714]">
-                        Original voice note
+                      <summary className="cursor-pointer font-semibold text-[#767C77] hover:text-[#111312]">
+                        Voice transcript
                       </summary>
-                      <p className="mt-1.5 p-2.5 rounded-lg bg-[#F4F1EA] border border-[#CFC8BA] italic font-medium text-[#141714]">
+                      <p className="mt-1.5 p-2.5 rounded-lg bg-[#F5F4F0] border border-[#E2E0D9] text-[#353936] italic">
                         &ldquo;{log.raw_transcript}&rdquo;
                       </p>
                     </details>
                   )}
 
                   {(log.cow || log.transaction) && (
-                    <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-[#EBE6DC]">
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
                       {log.cow && (
                         <Link
                           href={`/herd/${log.cow.id}`}
-                          className="inline-flex items-center gap-1.5 min-h-[36px]"
+                          className="inline-flex items-center gap-1.5"
                         >
                           <EarTagBadge tag={log.cow.tag_number} size="sm" />
                           {log.cow.name && (
-                            <span className="text-xs font-extrabold text-[#1B4D2E] underline">
+                            <span className="text-xs font-semibold text-[#173324] hover:underline">
                               {log.cow.name}
                             </span>
                           )}
@@ -219,10 +215,10 @@ export default function DailyLogsPage() {
                       {log.transaction && (
                         <Link
                           href={`/finances?highlight=${log.transaction.id}`}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border-2 font-mono text-xs font-extrabold tabular-nums ${
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded border border-[#E2E0D9] bg-[#FAFAF8] font-mono text-xs font-semibold tabular-nums ${
                             log.transaction.type === 'INCOME'
-                              ? 'bg-[#DCFCE7] text-[#14532D] border-[#15803D]'
-                              : 'bg-[#FEE2E2] text-[#7F1D1D] border-[#B91C1C]'
+                              ? 'text-[#157347]'
+                              : 'text-[#B42318]'
                           }`}
                         >
                           {log.transaction.type === 'INCOME' ? '+' : '−'}

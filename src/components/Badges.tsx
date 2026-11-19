@@ -15,21 +15,27 @@ import {
 
 export function StatusBadge({ status }: { status: string }) {
   const s = status as CowStatus;
-  const styles: Record<string, string> = {
-    ACTIVE: 'bg-[#DCFCE7] text-[#14532D] border-[#15803D]',
-    PREGNANT: 'bg-[#FEF3C7] text-[#78350F] border-[#B45309]',
-    NURSING: 'bg-[#E0F2FE] text-[#0C4A6E] border-[#0369A1]',
-    SICK: 'bg-[#FEE2E2] text-[#7F1D1D] border-[#B91C1C]',
-    SOLD: 'bg-[#E5E7EB] text-[#1F2937] border-[#6B7280]',
-    DECEASED: 'bg-[#27272A] text-[#F4F4F5] border-[#18181B]',
+  const dotColors: Record<string, string> = {
+    ACTIVE: 'bg-[#157347]',
+    PREGNANT: 'bg-[#B45309]',
+    NURSING: 'bg-[#0E6087]',
+    SICK: 'bg-[#B42318]',
+    SOLD: 'bg-[#767C77]',
+    DECEASED: 'bg-[#111312]',
+  };
+  const textColors: Record<string, string> = {
+    SICK: 'text-[#B42318]',
+    PREGNANT: 'text-[#92400E]',
+    SOLD: 'text-[#525753]',
   };
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-1 rounded-lg border-2 text-xs font-extrabold uppercase tracking-wide whitespace-nowrap ${
-        styles[status] ?? 'bg-[#EBE6DC] text-[#141714] border-[#CFC8BA]'
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-[#E2E0D9] bg-[#FAFAF8] text-[11px] font-semibold uppercase tracking-[0.06em] whitespace-nowrap ${
+        textColors[status] ?? 'text-[#111312]'
       }`}
     >
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColors[status] ?? 'bg-[#767C77]'}`} />
       {COW_STATUS_LABELS[s] ?? status}
     </span>
   );
@@ -38,7 +44,7 @@ export function StatusBadge({ status }: { status: string }) {
 export function CategoryBadge({ category }: { category: string }) {
   const c = category as CowCategory;
   return (
-    <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[#EBE6DC] text-[#141714] border border-[#CFC8BA] text-xs font-bold uppercase tracking-wide whitespace-nowrap">
+    <span className="inline-flex items-center px-2 py-0.5 rounded bg-[#EFEDE8] text-[#525753] text-[11px] font-semibold uppercase tracking-[0.06em] whitespace-nowrap">
       {COW_CATEGORY_LABELS[c] ?? category}
     </span>
   );
@@ -46,22 +52,19 @@ export function CategoryBadge({ category }: { category: string }) {
 
 export function LogCategoryBadge({ category }: { category: string }) {
   const c = category as LogCategory;
-  const styles: Record<string, string> = {
-    CALVING: 'bg-[#E0F2FE] text-[#0C4A6E] border-[#0369A1]',
-    HEALTH_VET: 'bg-[#FEE2E2] text-[#7F1D1D] border-[#B91C1C]',
-    FEEDING: 'bg-[#DCFCE7] text-[#14532D] border-[#15803D]',
-    FENCING_MAINTENANCE: 'bg-[#FEF3C7] text-[#78350F] border-[#B45309]',
-    PASTURE_ROTATION: 'bg-[#ECFCCB] text-[#365314] border-[#4D7C0F]',
-    EQUIPMENT: 'bg-[#F3E8FF] text-[#4C1D95] border-[#6D28D9]',
-    GENERAL: 'bg-[#EBE6DC] text-[#141714] border-[#8C8577]',
+  const dotColors: Record<string, string> = {
+    CALVING: 'bg-[#0E6087]',
+    HEALTH_VET: 'bg-[#B42318]',
+    FEEDING: 'bg-[#157347]',
+    FENCING_MAINTENANCE: 'bg-[#B45309]',
+    PASTURE_ROTATION: 'bg-[#3F6212]',
+    EQUIPMENT: 'bg-[#475569]',
+    GENERAL: 'bg-[#767C77]',
   };
 
   return (
-    <span
-      className={`inline-flex items-center px-2.5 py-1 rounded-lg border text-xs font-extrabold uppercase tracking-wide whitespace-nowrap ${
-        styles[category] ?? styles.GENERAL
-      }`}
-    >
+    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-[#E2E0D9] bg-[#FAFAF8] text-[#111312] text-[11px] font-semibold uppercase tracking-[0.06em] whitespace-nowrap">
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColors[category] ?? dotColors.GENERAL}`} />
       {LOG_CATEGORY_LABELS[c] ?? category}
     </span>
   );
@@ -69,19 +72,17 @@ export function LogCategoryBadge({ category }: { category: string }) {
 
 export function HealthTypeBadge({ type }: { type: string }) {
   const t = type as HealthType;
-  const styles: Record<string, string> = {
-    VACCINATION: 'bg-[#DCFCE7] text-[#14532D] border-[#15803D]',
-    MEDICATION: 'bg-[#FEF3C7] text-[#78350F] border-[#B45309]',
-    INJURY: 'bg-[#FEE2E2] text-[#7F1D1D] border-[#B91C1C]',
-    CHECKUP: 'bg-[#E0F2FE] text-[#0C4A6E] border-[#0369A1]',
-    CALVING_ASSIST: 'bg-[#E0F2FE] text-[#0C4A6E] border-[#0369A1]',
+  const dotColors: Record<string, string> = {
+    VACCINATION: 'bg-[#157347]',
+    MEDICATION: 'bg-[#B45309]',
+    INJURY: 'bg-[#B42318]',
+    CHECKUP: 'bg-[#0E6087]',
+    CALVING_ASSIST: 'bg-[#0E6087]',
   };
+
   return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-md border text-xs font-extrabold uppercase tracking-wide ${
-        styles[type] ?? 'bg-[#EBE6DC] text-[#141714] border-[#8C8577]'
-      }`}
-    >
+    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-[#E2E0D9] bg-white text-[#111312] text-[11px] font-semibold uppercase tracking-[0.06em]">
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColors[type] ?? 'bg-[#767C77]'}`} />
       {HEALTH_TYPE_LABELS[t] ?? type}
     </span>
   );
@@ -94,17 +95,22 @@ export function EarTagBadge({
   tag: string;
   size?: 'sm' | 'md' | 'lg';
 }) {
-  const sizeClasses =
-    size === 'lg'
-      ? 'px-4 py-2 text-2xl rounded-xl border-2'
-      : size === 'sm'
-      ? 'px-2 py-0.5 text-xs rounded-md border'
-      : 'px-3 py-1.5 text-base rounded-xl border-2';
-
+  if (size === 'lg') {
+    return (
+      <span className="inline-flex items-center px-3.5 py-2 rounded-lg bg-[#111312] text-[#F5F4F0] font-mono text-xl font-bold tracking-tight tabular-nums">
+        #{tag}
+      </span>
+    );
+  }
+  if (size === 'sm') {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded bg-[#EFEDE8] border border-[#D6D3CB] text-[#111312] font-mono text-xs font-bold tracking-tight tabular-nums">
+        #{tag}
+      </span>
+    );
+  }
   return (
-    <span
-      className={`inline-flex items-center font-mono font-extrabold tracking-tight bg-[#FEF08A] text-[#141714] border-[#141714] tabular-nums shadow-[0_2px_0_#141714] ${sizeClasses}`}
-    >
+    <span className="inline-flex items-center justify-center min-w-[60px] px-2.5 py-1.5 rounded-lg bg-[#EFEDE8] border border-[#D6D3CB] text-[#111312] font-mono text-sm font-bold tracking-tight tabular-nums">
       #{tag}
     </span>
   );
@@ -140,32 +146,32 @@ export function ModalSheet({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[#141714]/65 p-0 sm:p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[#111312]/50 backdrop-blur-[2px] p-0 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-label={title}
       onClick={onClose}
     >
       <div
-        className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto bg-[#F4F1EA] border-t-2 sm:border-2 border-[#141714] rounded-t-3xl sm:rounded-2xl shadow-2xl"
+        className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto bg-[#F5F4F0] border-t sm:border border-[#D6D3CB] rounded-t-2xl sm:rounded-xl shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-5 py-4 bg-[#FFFFFF] border-b-2 border-[#CFC8BA]">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-5 py-4 bg-white border-b border-[#E2E0D9]">
           <div>
-            <h2 className="text-xl font-extrabold tracking-tight text-[#141714]">
+            <h2 className="text-lg font-bold tracking-tight text-[#111312]">
               {title}
             </h2>
             {subtitle && (
-              <p className="text-sm font-medium text-[#474E47] mt-0.5">{subtitle}</p>
+              <p className="text-xs font-medium text-[#525753] mt-0.5">{subtitle}</p>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="min-h-[48px] min-w-[48px] flex items-center justify-center rounded-xl border-2 border-[#CFC8BA] bg-[#F4F1EA] text-[#141714] hover:border-[#141714] active:scale-95 transition"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-[#E2E0D9] bg-[#F5F4F0] text-[#111312] hover:bg-[#EFEDE8] transition"
           >
-            <X className="w-6 h-6 stroke-[2.5]" />
+            <X className="w-5 h-5 stroke-[2]" />
           </button>
         </div>
         <div className="p-5 pb-safe">{children}</div>

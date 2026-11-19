@@ -4,13 +4,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   AlertTriangle,
-  ArrowDownLeft,
-  ArrowRight,
-  ArrowUpRight,
-  CalendarClock,
+  ChevronRight,
   Mic,
   RefreshCw,
-  ShieldAlert,
 } from 'lucide-react';
 import { EarTagBadge, LogCategoryBadge } from '@/components/Badges';
 import { formatCurrency, formatShortDate, formatTime } from '@/lib/dates';
@@ -91,13 +87,15 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Heading */}
-      <div className="flex items-center justify-between gap-3">
+      {/* Header */}
+      <div className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#141714]">
-            Ranch Overview
+          <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-[#767C77]">
+            {todayLabel}
+          </p>
+          <h1 className="text-2xl sm:text-[28px] font-bold tracking-[-0.025em] text-[#111312] mt-0.5">
+            Operations Overview
           </h1>
-          <p className="text-sm font-bold text-[#474E47] mt-0.5">{todayLabel}</p>
         </div>
         <button
           type="button"
@@ -106,174 +104,157 @@ export default function DashboardPage() {
             fetchDashboard();
           }}
           aria-label="Refresh dashboard"
-          className="min-h-[48px] min-w-[48px] flex items-center justify-center rounded-xl bg-white border-2 border-[#CFC8BA] hover:border-[#141714] text-[#141714] active:scale-95 transition"
+          className="min-h-[42px] min-w-[42px] flex items-center justify-center rounded-lg bg-white border border-[#E2E0D9] hover:border-[#C9C6BC] text-[#525753] hover:text-[#111312] transition"
         >
-          <RefreshCw className={`w-5 h-5 stroke-[2.5] ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
-      {/* Live Herd KPI Cards (Tap any card to jump directly to filtered herd) */}
+      {/* Herd Telemetry Matrix */}
       <section aria-labelledby="herd-kpis-heading" className="space-y-3">
         <div className="flex items-center justify-between">
           <h2
             id="herd-kpis-heading"
-            className="text-xs font-extrabold uppercase tracking-widest text-[#474E47]"
+            className="text-[11px] font-bold uppercase tracking-[0.09em] text-[#767C77]"
           >
-            Live Herd Inventory — Tap to Filter
+            Herd Inventory
           </h2>
           <Link
             href="/herd"
-            className="text-sm font-extrabold text-[#1B4D2E] hover:underline inline-flex items-center gap-1"
+            className="text-xs font-semibold text-[#173324] hover:underline inline-flex items-center gap-0.5"
           >
-            Full Herd <ArrowRight className="w-4 h-4" />
+            View all <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
-        {/* Hero Active Head + Breakdown */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* Unified KPI Grid */}
+        <div className="field-card overflow-hidden">
           <Link
             href="/herd?filter=active"
-            className="col-span-2 sm:col-span-2 field-card-interactive p-4 bg-[#1B4D2E]! border-[#141714]! text-white flex items-center justify-between"
+            className="flex items-center justify-between px-5 py-4 bg-[#173324] text-[#F5F4F0] hover:bg-[#11281C] transition"
           >
             <div>
-              <span className="block text-xs font-extrabold uppercase tracking-wider text-[#CDE5D4]">
-                Total Active Head
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.09em] text-[#A8C2B3]">
+                Active Head Count
               </span>
-              <span className="block font-mono text-4xl font-extrabold tabular-nums mt-1">
-                {data ? data.herd.totalActiveHead : '—'}
-              </span>
-              {data && (
-                <span className="block text-xs font-bold text-[#CDE5D4] mt-1">
-                  {data.herd.steers} Steers · {data.herd.sold} Sold
+              <div className="flex items-baseline gap-3 mt-1">
+                <span className="font-mono text-4xl font-semibold tabular-nums tracking-tight">
+                  {data ? data.herd.totalActiveHead : '—'}
                 </span>
-              )}
+                {data && (
+                  <span className="text-xs font-medium text-[#C5D8CD]">
+                    {data.herd.steers} steers · {data.herd.sold} sold
+                  </span>
+                )}
+              </div>
             </div>
-            <ArrowRight className="w-6 h-6 text-[#FEF08A] shrink-0" />
+            <ChevronRight className="w-5 h-5 text-[#A8C2B3]" />
           </Link>
 
-          <Link
-            href="/herd?filter=cows"
-            className="field-card-interactive p-4 flex flex-col justify-between"
-          >
-            <span className="text-xs font-extrabold uppercase tracking-wider text-[#474E47]">
-              Cows & Heifers
-            </span>
-            <div className="mt-2 flex items-baseline justify-between">
-              <span className="font-mono text-3xl font-extrabold tabular-nums text-[#141714]">
-                {data ? data.herd.cowsAndHeifers : '—'}
+          <div className="grid grid-cols-3 divide-x divide-[#ECEAE4] bg-white">
+            <Link
+              href="/herd?filter=cows"
+              className="px-4 py-3.5 hover:bg-[#FAFAF8] transition"
+            >
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-[#767C77]">
+                Cows / Hfrs
               </span>
-              <span className="text-xs font-bold text-[#474E47]">
-                {data ? `${data.herd.cows}C / ${data.herd.heifers}H` : ''}
-              </span>
-            </div>
-          </Link>
+              <div className="flex items-baseline justify-between mt-1">
+                <span className="font-mono text-2xl font-semibold tabular-nums text-[#111312]">
+                  {data ? data.herd.cowsAndHeifers : '—'}
+                </span>
+                <span className="text-[11px] font-mono text-[#767C77]">
+                  {data ? `${data.herd.cows}/${data.herd.heifers}` : ''}
+                </span>
+              </div>
+            </Link>
 
-          <div className="grid grid-cols-2 gap-3 col-span-1 sm:col-span-1">
             <Link
               href="/herd?filter=bulls"
-              className="field-card-interactive p-3.5 flex flex-col justify-between"
+              className="px-4 py-3.5 hover:bg-[#FAFAF8] transition"
             >
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#474E47]">
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-[#767C77]">
                 Bulls
               </span>
-              <span className="font-mono text-2xl font-extrabold tabular-nums text-[#141714] mt-1">
+              <span className="block font-mono text-2xl font-semibold tabular-nums text-[#111312] mt-1">
                 {data ? data.herd.bulls : '—'}
               </span>
             </Link>
+
             <Link
               href="/herd?filter=calves"
-              className="field-card-interactive p-3.5 flex flex-col justify-between"
+              className="px-4 py-3.5 hover:bg-[#FAFAF8] transition"
             >
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#474E47]">
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-[#767C77]">
                 Calves
               </span>
-              <span className="font-mono text-2xl font-extrabold tabular-nums text-[#141714] mt-1">
+              <span className="block font-mono text-2xl font-semibold tabular-nums text-[#111312] mt-1">
                 {data ? data.herd.calves : '—'}
               </span>
             </Link>
           </div>
         </div>
 
-        {/* High-Visibility Quick-Filter Alert Cards */}
+        {/* Precision Left-Rail Priority Alert Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Link
             href="/herd?filter=due_soon"
-            className={`field-card-interactive p-4 flex items-center justify-between gap-3 ${
-              data && data.herd.dueWithin30Days > 0
-                ? 'bg-[#FEF3C7]! border-[#B45309]!'
-                : ''
-            }`}
+            className="field-card-interactive px-4 py-3.5 border-l-[3px]! border-l-[#B45309]! flex items-center justify-between gap-3"
           >
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-xl bg-[#B45309] text-white flex items-center justify-center shrink-0">
-                <CalendarClock className="w-6 h-6 stroke-[2.5]" />
-              </div>
-              <div>
-                <span className="block text-xs font-extrabold uppercase tracking-wider text-[#78350F]">
-                  Pregnant / Due ≤ 30 Days
+            <div>
+              <span className="block text-[11px] font-bold uppercase tracking-[0.07em] text-[#92400E]">
+                Due Within 30 Days
+              </span>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="font-mono text-2xl font-semibold tabular-nums text-[#111312]">
+                  {data ? data.herd.dueWithin30Days : '—'}
                 </span>
-                <div className="flex items-baseline gap-2 mt-0.5">
-                  <span className="font-mono text-3xl font-extrabold tabular-nums text-[#141714]">
-                    {data ? data.herd.dueWithin30Days : '—'}
-                  </span>
-                  <span className="text-sm font-bold text-[#78350F]">
-                    due soon ({data ? data.herd.pregnant : '—'} total bred)
-                  </span>
-                </div>
+                <span className="text-xs font-medium text-[#525753]">
+                  of {data ? data.herd.pregnant : '—'} pregnant
+                </span>
               </div>
             </div>
-            <ArrowRight className="w-5 h-5 text-[#78350F] shrink-0" />
+            <ChevronRight className="w-4 h-4 text-[#767C77]" />
           </Link>
 
           <Link
             href="/herd?filter=sick_or_withdrawal"
-            className={`field-card-interactive p-4 flex items-center justify-between gap-3 ${
-              data && data.herd.sickOrWithdrawal > 0
-                ? 'bg-[#FEE2E2]! border-[#B91C1C]!'
-                : ''
-            }`}
+            className="field-card-interactive px-4 py-3.5 border-l-[3px]! border-l-[#B42318]! flex items-center justify-between gap-3"
           >
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-xl bg-[#B91C1C] text-white flex items-center justify-center shrink-0">
-                <ShieldAlert className="w-6 h-6 stroke-[2.5]" />
-              </div>
-              <div>
-                <span className="block text-xs font-extrabold uppercase tracking-wider text-[#7F1D1D]">
-                  Sick / Withdrawal Flags
+            <div>
+              <span className="block text-[11px] font-bold uppercase tracking-[0.07em] text-[#B42318]">
+                Sick &amp; Withdrawal Hold
+              </span>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="font-mono text-2xl font-semibold tabular-nums text-[#111312]">
+                  {data ? data.herd.sickOrWithdrawal : '—'}
                 </span>
-                <div className="flex items-baseline gap-2 mt-0.5">
-                  <span className="font-mono text-3xl font-extrabold tabular-nums text-[#141714]">
-                    {data ? data.herd.sickOrWithdrawal : '—'}
-                  </span>
-                  <span className="text-sm font-bold text-[#7F1D1D]">
-                    {data
-                      ? `${data.herd.sick} sick · ${data.herd.activeWithdrawals} hold`
-                      : ''}
-                  </span>
-                </div>
+                <span className="text-xs font-medium text-[#525753]">
+                  {data ? `${data.herd.sick} sick · ${data.herd.activeWithdrawals} hold` : ''}
+                </span>
               </div>
             </div>
-            <ArrowRight className="w-5 h-5 text-[#7F1D1D] shrink-0" />
+            <ChevronRight className="w-4 h-4 text-[#767C77]" />
           </Link>
         </div>
 
-        {/* Active Withdrawal Banner */}
+        {/* Active Withdrawal Holds Strip */}
         {data && data.withdrawalAlerts.length > 0 && (
-          <div className="p-3.5 rounded-2xl bg-[#FEF3C7] border-2 border-[#B45309] space-y-2">
-            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-[#78350F]">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-              Active Medication Withdrawals (Do Not Sell)
+          <div className="field-card px-4 py-3 border-l-[3px]! border-l-[#B42318]! space-y-2">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.07em] text-[#B42318]">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+              Active Withdrawal Holds — Do Not Sell
             </div>
             <div className="flex flex-wrap gap-2">
               {data.withdrawalAlerts.map((w) => (
                 <Link
                   key={w.id}
                   href={`/herd/${w.cow_id}`}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border-2 border-[#B45309] text-sm font-bold text-[#141714] hover:bg-[#FFFBEB]"
+                  className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-[#F5F4F0] hover:bg-[#EFEDE8] border border-[#E2E0D9] text-xs transition"
                 >
-                  <span className="font-mono font-extrabold">#{w.tag_number}</span>
-                  <span className="text-[#474E47]">{w.treatment_name}</span>
-                  <span className="text-xs font-extrabold text-[#B45309] font-mono">
+                  <span className="font-mono font-bold text-[#111312]">#{w.tag_number}</span>
+                  <span className="text-[#525753] font-medium">{w.treatment_name}</span>
+                  <span className="font-mono font-semibold text-[#B42318]">
                     Clear {formatShortDate(w.safe_to_sell_date)}
                   </span>
                 </Link>
@@ -284,66 +265,66 @@ export default function DashboardPage() {
       </section>
 
       {/* Cash Flow Snapshot */}
-      <section aria-labelledby="cashflow-heading" className="field-card p-4 sm:p-5 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+      <section aria-labelledby="cashflow-heading" className="field-card overflow-hidden">
+        <div className="px-4 py-3.5 border-b border-[#ECEAE4] flex items-center justify-between gap-2">
           <h2
             id="cashflow-heading"
-            className="text-lg font-extrabold tracking-tight text-[#141714]"
+            className="text-[11px] font-bold uppercase tracking-[0.09em] text-[#767C77]"
           >
-            Cash Flow Snapshot
+            Cash Flow
           </h2>
-          <div className="inline-flex p-1 rounded-xl bg-[#EBE6DC] border-2 border-[#CFC8BA]">
+          <div className="inline-flex p-0.5 rounded-lg bg-[#EFEDE8] border border-[#E2E0D9]">
             <button
               type="button"
               onClick={() => setCashPeriod('month')}
-              className={`min-h-[38px] px-3.5 rounded-lg text-xs font-extrabold uppercase tracking-wide transition ${
+              className={`min-h-[30px] px-2.5 rounded-md text-[11px] font-semibold transition ${
                 cashPeriod === 'month'
-                  ? 'bg-[#141714] text-white'
-                  : 'text-[#474E47] hover:text-[#141714]'
+                  ? 'bg-white text-[#111312] shadow-xs'
+                  : 'text-[#525753] hover:text-[#111312]'
               }`}
             >
-              This Month
+              Month
             </button>
             <button
               type="button"
               onClick={() => setCashPeriod('ytd')}
-              className={`min-h-[38px] px-3.5 rounded-lg text-xs font-extrabold uppercase tracking-wide transition ${
+              className={`min-h-[30px] px-2.5 rounded-md text-[11px] font-semibold transition ${
                 cashPeriod === 'ytd'
-                  ? 'bg-[#141714] text-white'
-                  : 'text-[#474E47] hover:text-[#141714]'
+                  ? 'bg-white text-[#111312] shadow-xs'
+                  : 'text-[#525753] hover:text-[#111312]'
               }`}
             >
-              Year to Date
+              YTD
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-          <div className="p-3 sm:p-3.5 rounded-xl bg-[#DCFCE7] border-2 border-[#15803D]">
-            <span className="flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wide text-[#14532D]">
-              <ArrowDownLeft className="w-3.5 h-3.5" /> Money In
+        <div className="grid grid-cols-3 divide-x divide-[#ECEAE4]">
+          <div className="p-3.5 sm:p-4">
+            <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-[#767C77]">
+              Inflow
             </span>
-            <span className="block font-mono text-lg sm:text-xl font-extrabold tabular-nums text-[#14532D] mt-1">
+            <span className="block font-mono text-base sm:text-xl font-semibold tabular-nums text-[#157347] mt-1">
               {activeCash ? formatCurrency(activeCash.income) : '—'}
             </span>
           </div>
 
-          <div className="p-3 sm:p-3.5 rounded-xl bg-[#FEE2E2] border-2 border-[#B91C1C]">
-            <span className="flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wide text-[#7F1D1D]">
-              <ArrowUpRight className="w-3.5 h-3.5" /> Money Out
+          <div className="p-3.5 sm:p-4">
+            <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-[#767C77]">
+              Outflow
             </span>
-            <span className="block font-mono text-lg sm:text-xl font-extrabold tabular-nums text-[#7F1D1D] mt-1">
+            <span className="block font-mono text-base sm:text-xl font-semibold tabular-nums text-[#B42318] mt-1">
               {activeCash ? formatCurrency(activeCash.expenses) : '—'}
             </span>
           </div>
 
-          <div className="p-3 sm:p-3.5 rounded-xl bg-[#F4F1EA] border-2 border-[#141714]">
-            <span className="block text-[11px] font-extrabold uppercase tracking-wide text-[#474E47]">
-              Net Flow
+          <div className="p-3.5 sm:p-4 bg-[#FAFAF8]">
+            <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-[#767C77]">
+              Net
             </span>
             <span
-              className={`block font-mono text-lg sm:text-xl font-extrabold tabular-nums mt-1 ${
-                activeCash && activeCash.net >= 0 ? 'text-[#15803D]' : 'text-[#B91C1C]'
+              className={`block font-mono text-base sm:text-xl font-semibold tabular-nums mt-1 ${
+                activeCash && activeCash.net >= 0 ? 'text-[#111312]' : 'text-[#B42318]'
               }`}
             >
               {activeCash
@@ -353,63 +334,62 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="pt-1 flex justify-end">
-          <Link
-            href="/finances"
-            className="text-sm font-extrabold text-[#1B4D2E] hover:underline inline-flex items-center gap-1"
-          >
-            Open Full Ledger <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+        <Link
+          href="/finances"
+          className="px-4 py-2.5 border-t border-[#ECEAE4] bg-[#FAFAF8] hover:bg-[#F5F4F0] flex items-center justify-between text-xs font-semibold text-[#525753] hover:text-[#111312] transition"
+        >
+          <span>Open Cash-Flow Ledger</span>
+          <ChevronRight className="w-3.5 h-3.5" />
+        </Link>
       </section>
 
-      {/* Recent Activity Feed (Last 5 daily_logs) */}
+      {/* Recent Activity Feed */}
       <section aria-labelledby="recent-activity-heading" className="space-y-3">
         <div className="flex items-center justify-between">
           <h2
             id="recent-activity-heading"
-            className="text-lg font-extrabold tracking-tight text-[#141714]"
+            className="text-[11px] font-bold uppercase tracking-[0.09em] text-[#767C77]"
           >
             Recent Activity
           </h2>
           <Link
             href="/logs"
-            className="text-sm font-extrabold text-[#1B4D2E] hover:underline inline-flex items-center gap-1"
+            className="text-xs font-semibold text-[#173324] hover:underline inline-flex items-center gap-0.5"
           >
-            All Logs <ArrowRight className="w-4 h-4" />
+            Full log <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
-        <div className="space-y-2.5">
+        <div className="field-card divide-y divide-[#ECEAE4] overflow-hidden">
           {!data && loading && (
-            <div className="field-card p-6 text-center font-bold text-[#474E47]">
+            <div className="p-6 text-center text-sm font-medium text-[#767C77]">
               Loading ranch activity...
             </div>
           )}
 
           {data && data.recentLogs.length === 0 && (
-            <div className="field-card p-6 text-center font-bold text-[#474E47]">
+            <div className="p-6 text-center text-sm font-medium text-[#767C77]">
               No activity logged yet.
             </div>
           )}
 
           {data?.recentLogs.map((log) => (
-            <article key={log.id} className="field-card p-4 space-y-2.5">
+            <article key={log.id} className="p-4 space-y-2 bg-white">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <LogCategoryBadge category={log.category} />
                   {log.raw_transcript && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#141714] text-[#FEF08A] text-[11px] font-extrabold uppercase tracking-wide">
-                      <Mic className="w-3 h-3" /> Instinct AI
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#111312] text-[#F5F4F0] text-[10px] font-semibold uppercase tracking-wider">
+                      <Mic className="w-2.5 h-2.5" /> AI Voice
                     </span>
                   )}
                 </div>
-                <span className="text-xs font-bold font-mono text-[#474E47]">
+                <span className="text-[11px] font-mono text-[#767C77]">
                   {formatShortDate(log.timestamp)} · {formatTime(log.timestamp)}
                 </span>
               </div>
 
-              <p className="text-base font-semibold leading-snug text-[#141714]">
+              <p className="text-sm sm:text-[15px] font-medium leading-snug text-[#111312]">
                 {log.summary}
               </p>
 
@@ -423,10 +403,10 @@ export default function DashboardPage() {
                   {log.transaction && (
                     <Link
                       href={`/finances?highlight=${log.transaction.id}`}
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-md border font-mono text-xs font-extrabold tabular-nums ${
+                      className={`inline-flex items-center px-2 py-0.5 rounded border border-[#E2E0D9] bg-[#FAFAF8] font-mono text-xs font-semibold tabular-nums ${
                         log.transaction.type === 'INCOME'
-                          ? 'bg-[#DCFCE7] text-[#14532D] border-[#15803D]'
-                          : 'bg-[#FEE2E2] text-[#7F1D1D] border-[#B91C1C]'
+                          ? 'text-[#157347]'
+                          : 'text-[#B42318]'
                       }`}
                     >
                       {log.transaction.type === 'INCOME' ? '+' : '−'}

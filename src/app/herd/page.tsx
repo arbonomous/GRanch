@@ -36,13 +36,14 @@ interface CowRow {
 
 const FILTER_PILLS = [
   { key: 'all', label: 'All' },
+  { key: 'active', label: 'Active' },
   { key: 'cows', label: 'Cows' },
   { key: 'bulls', label: 'Bulls' },
   { key: 'calves', label: 'Calves' },
   { key: 'pregnant', label: 'Pregnant' },
   { key: 'due_soon', label: 'Due ≤30d' },
   { key: 'sick', label: 'Sick' },
-  { key: 'sick_or_withdrawal', label: 'Health Flags' },
+  { key: 'sick_or_withdrawal', label: 'Flags' },
   { key: 'sold', label: 'Sold' },
 ];
 
@@ -112,53 +113,52 @@ function HerdContent() {
 
   return (
     <div className="space-y-4">
-      {/* Header + Add Animal */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#141714]">
-            Herd Inventory
-          </h1>
-          <p className="text-sm font-bold text-[#474E47] tabular-nums">
-            {loading ? 'Loading...' : `${cows.length} ${cows.length === 1 ? 'animal' : 'animals'} shown`}
+          <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-[#767C77] tabular-nums">
+            {loading ? 'Loading inventory' : `${cows.length} ${cows.length === 1 ? 'head' : 'head'} shown`}
           </p>
+          <h1 className="text-2xl sm:text-[28px] font-bold tracking-[-0.025em] text-[#111312] mt-0.5">
+            Herd Registry
+          </h1>
         </div>
 
         <button
           type="button"
           id="add-animal-btn"
           onClick={() => setAddModalOpen(true)}
-          className="min-h-[50px] px-4 inline-flex items-center gap-2 rounded-xl bg-[#1B4D2E] hover:bg-[#133922] text-white font-extrabold text-sm sm:text-base border-2 border-[#141714] shadow-[0_2px_0_#141714] active:translate-y-0.5 transition shrink-0"
+          className="min-h-[44px] px-4 inline-flex items-center gap-1.5 rounded-lg bg-[#173324] hover:bg-[#0F2419] text-white font-semibold text-sm transition shrink-0"
         >
-          <Plus className="w-5 h-5 stroke-[2.5]" />
+          <Plus className="w-4 h-4 stroke-[2.25]" />
           <span>Add Animal</span>
         </button>
       </div>
 
-      {/* Instant Tag Search Bar */}
+      {/* Search */}
       <div className="relative">
-        <Search className="w-5 h-5 text-[#474E47] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <Search className="w-4 h-4 text-[#767C77] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         <input
           id="herd-search-input"
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by Ear Tag # (e.g. 214, Yellow-12) or name..."
-          className="field-input pl-12! pr-12! bg-white!"
+          placeholder="Search ear tag (#214, Yellow-12), name, or breed..."
+          className="field-input pl-10! pr-10! bg-white!"
         />
         {query && (
           <button
             type="button"
             onClick={() => setQuery('')}
             aria-label="Clear search"
-            className="absolute right-2 top-1/2 -translate-y-1/2 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg text-[#474E47] hover:text-[#141714]"
+            className="absolute right-2 top-1/2 -translate-y-1/2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-md text-[#767C77] hover:text-[#111312]"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         )}
       </div>
 
-      {/* Scrollable High-Contrast Filter Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
+      {/* Filter Pills */}
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 -mx-4 px-4">
         {FILTER_PILLS.map((pill) => {
           const active = filter === pill.key;
           return (
@@ -166,10 +166,10 @@ function HerdContent() {
               key={pill.key}
               type="button"
               onClick={() => handleSelectFilter(pill.key)}
-              className={`min-h-[44px] px-4 rounded-xl font-extrabold text-sm whitespace-nowrap border-2 transition shrink-0 ${
+              className={`min-h-[38px] px-3.5 rounded-lg font-semibold text-xs whitespace-nowrap border transition shrink-0 ${
                 active
-                  ? 'bg-[#141714] text-white border-[#141714]'
-                  : 'bg-white text-[#141714] border-[#CFC8BA] hover:border-[#141714]'
+                  ? 'bg-[#111312] text-[#F5F4F0] border-[#111312]'
+                  : 'bg-white text-[#525753] border-[#E2E0D9] hover:border-[#C9C6BC] hover:text-[#111312]'
               }`}
             >
               {pill.label}
@@ -178,13 +178,13 @@ function HerdContent() {
         })}
       </div>
 
-      {/* Animal List */}
-      <div className="space-y-3">
+      {/* Unified Animal Registry List */}
+      <div className="field-card divide-y divide-[#ECEAE4] overflow-hidden">
         {!loading && cows.length === 0 && (
-          <div className="field-card p-8 text-center space-y-2">
-            <p className="text-lg font-extrabold text-[#141714]">No matching animals</p>
-            <p className="text-sm font-medium text-[#474E47]">
-              Try clearing your search or switching filter pills.
+          <div className="p-8 text-center space-y-1">
+            <p className="text-base font-semibold text-[#111312]">No matching animals</p>
+            <p className="text-xs text-[#767C77]">
+              Adjust your search query or filter selection.
             </p>
           </div>
         )}
@@ -195,20 +195,20 @@ function HerdContent() {
             <Link
               key={cow.id}
               href={`/herd/${cow.id}`}
-              className="field-card-interactive block p-4"
+              className="block px-4 py-3.5 bg-white hover:bg-[#FAFAF8] transition"
             >
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3.5 min-w-0">
+                <div className="flex items-center gap-3 min-w-0">
                   <EarTagBadge tag={cow.tag_number} size="md" />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-extrabold text-lg text-[#141714] truncate">
-                        {cow.name || `${cow.category.charAt(0) + cow.category.slice(1).toLowerCase()} #${cow.tag_number}`}
+                      <span className="font-semibold text-[15px] text-[#111312] truncate">
+                        {cow.name || `#${cow.tag_number}`}
                       </span>
                       <CategoryBadge category={cow.category} />
                     </div>
-                    <p className="text-sm font-semibold text-[#474E47] truncate mt-0.5">
-                      {cow.breed || 'Breed unspecified'}
+                    <p className="text-xs text-[#767C77] truncate mt-0.5">
+                      {cow.breed || 'Unspecified breed'}
                       {cow._count.calves_as_dam > 0
                         ? ` · ${cow._count.calves_as_dam} ${
                             cow._count.calves_as_dam === 1 ? 'calf' : 'calves'
@@ -220,28 +220,27 @@ function HerdContent() {
 
                 <div className="flex items-center gap-2 shrink-0">
                   <StatusBadge status={cow.status} />
-                  <ChevronRight className="w-5 h-5 text-[#474E47]" />
+                  <ChevronRight className="w-4 h-4 text-[#A0A4A0]" />
                 </div>
               </div>
 
-              {/* Contextual Field Alerts (Due Date / Withdrawal Hold) */}
               {(cow.expected_due_date || cow.active_withdrawal) && (
-                <div className="mt-3 pt-3 border-t border-[#EBE6DC] flex flex-wrap gap-2">
+                <div className="mt-2.5 pl-[72px] flex flex-wrap gap-2">
                   {cow.expected_due_date && (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FEF3C7] border border-[#B45309] text-[#78350F] text-xs font-extrabold font-mono">
-                      <CalendarClock className="w-3.5 h-3.5" />
+                    <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-[#92400E]">
+                      <CalendarClock className="w-3 h-3" />
                       Due {formatShortDate(cow.expected_due_date)}
                       {dueDays !== null
                         ? dueDays >= 0
                           ? ` (${dueDays}d)`
-                          : ` (${Math.abs(dueDays)}d overdue)`
+                          : ` (${Math.abs(dueDays)}d over)`
                         : ''}
                     </span>
                   )}
                   {cow.active_withdrawal && (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FEE2E2] border border-[#B91C1C] text-[#7F1D1D] text-xs font-extrabold font-mono">
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                      HOLD: {cow.active_withdrawal.treatment_name} until{' '}
+                    <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-[#B42318]">
+                      <AlertTriangle className="w-3 h-3" />
+                      Hold: {cow.active_withdrawal.treatment_name} until{' '}
                       {formatShortDate(cow.active_withdrawal.safe_to_sell_date)}
                     </span>
                   )}
@@ -266,7 +265,7 @@ export default function HerdPage() {
   return (
     <Suspense
       fallback={
-        <div className="field-card p-6 text-center font-bold text-[#474E47]">
+        <div className="field-card p-6 text-center text-sm font-medium text-[#767C77]">
           Loading herd...
         </div>
       }

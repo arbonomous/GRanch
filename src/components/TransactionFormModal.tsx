@@ -247,13 +247,13 @@ function TransactionFormInner({
       <button
         type="submit"
         disabled={submitting}
-        className={`w-full min-h-[54px] flex items-center justify-center gap-2 rounded-xl text-white font-extrabold text-base border-2 border-[#141714] shadow-[0_2px_0_#141714] active:translate-y-0.5 transition disabled:opacity-50 ${
+        className={`w-full min-h-[50px] flex items-center justify-center gap-2 rounded-lg text-white font-semibold text-sm transition disabled:opacity-50 ${
           type === 'INCOME'
-            ? 'bg-[#15803D] hover:bg-[#166534]'
-            : 'bg-[#B91C1C] hover:bg-[#991B1B]'
+            ? 'bg-[#157347] hover:bg-[#115E3A]'
+            : 'bg-[#B42318] hover:bg-[#911C13]'
         }`}
       >
-        <DollarSign className="w-5 h-5" />
+        <DollarSign className="w-4 h-4" />
         {submitting
           ? 'Saving...'
           : type === 'INCOME'

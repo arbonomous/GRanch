@@ -296,9 +296,9 @@ function CowFormInner({
       <button
         type="submit"
         disabled={submitting}
-        className="w-full min-h-[54px] flex items-center justify-center gap-2 rounded-xl bg-[#1B4D2E] hover:bg-[#133922] disabled:opacity-50 text-white font-extrabold text-base border-2 border-[#141714] shadow-[0_2px_0_#141714] active:translate-y-0.5 transition"
+        className="w-full min-h-[50px] flex items-center justify-center gap-2 rounded-lg bg-[#173324] hover:bg-[#0F2419] disabled:opacity-50 text-white font-semibold text-sm transition"
       >
-        <Save className="w-5 h-5" />
+        <Save className="w-4 h-4" />
         {submitting ? 'Saving...' : isEdit ? 'Save Changes' : 'Add Animal to Herd'}
       </button>
     </form>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Bot, CheckCircle2, ExternalLink, KeyRound, Send, Terminal } from 'lucide-react';
+import { CheckCircle2, ExternalLink, KeyRound, Send, Terminal } from 'lucide-react';
 import { ModalSheet } from './Badges';
 
 const SAMPLE_INGEST =
@@ -78,11 +78,10 @@ export function InstinctAiDrawer({
       open={open}
       onClose={onClose}
       title="Instinct AI Console"
-      subtitle="Test authenticated /api/ai/ingest & /api/ai/query endpoints"
+      subtitle="Authenticated endpoint tester for /api/ai/ingest & /api/ai/query"
     >
       <div className="space-y-4">
-        {/* Mode Switcher */}
-        <div className="grid grid-cols-2 gap-2 p-1.5 bg-[#EBE6DC] rounded-xl border-2 border-[#CFC8BA]">
+        <div className="grid grid-cols-2 gap-1 p-1 bg-[#EFEDE8] rounded-lg border border-[#E2E0D9]">
           <button
             type="button"
             onClick={() => {
@@ -90,10 +89,10 @@ export function InstinctAiDrawer({
               setInput(SAMPLE_INGEST);
               setResult(null);
             }}
-            className={`min-h-[48px] rounded-lg font-extrabold text-sm transition ${
+            className={`min-h-[42px] rounded-md font-mono font-semibold text-xs transition ${
               mode === 'ingest'
-                ? 'bg-[#1B4D2E] text-white shadow-sm'
-                : 'text-[#141714] hover:bg-white/60'
+                ? 'bg-white text-[#111312] shadow-xs border border-[#E2E0D9]'
+                : 'text-[#525753] hover:text-[#111312]'
             }`}
           >
             POST /api/ai/ingest
@@ -105,10 +104,10 @@ export function InstinctAiDrawer({
               setInput(SAMPLE_QUERY);
               setResult(null);
             }}
-            className={`min-h-[48px] rounded-lg font-extrabold text-sm transition ${
+            className={`min-h-[42px] rounded-md font-mono font-semibold text-xs transition ${
               mode === 'query'
-                ? 'bg-[#1B4D2E] text-white shadow-sm'
-                : 'text-[#141714] hover:bg-white/60'
+                ? 'bg-white text-[#111312] shadow-xs border border-[#E2E0D9]'
+                : 'text-[#525753] hover:text-[#111312]'
             }`}
           >
             POST /api/ai/query
@@ -118,7 +117,7 @@ export function InstinctAiDrawer({
         <form onSubmit={handleRun} className="space-y-4">
           <div>
             <label htmlFor="instinct-api-key" className="field-label flex items-center gap-1.5">
-              <KeyRound className="w-4 h-4" />
+              <KeyRound className="w-3.5 h-3.5" />
               Bearer API Key (AI_API_KEY)
             </label>
             <input
@@ -133,9 +132,8 @@ export function InstinctAiDrawer({
           </div>
 
           <div>
-            <label htmlFor="instinct-input" className="field-label flex items-center gap-1.5">
-              <Bot className="w-4 h-4" />
-              {mode === 'ingest' ? 'Voice / Text Note Transcript' : 'Ranch Question'}
+            <label htmlFor="instinct-input" className="field-label">
+              {mode === 'ingest' ? 'Voice / Text Transcript' : 'Ranch Query'}
             </label>
             <textarea
               id="instinct-input"
@@ -143,46 +141,43 @@ export function InstinctAiDrawer({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               className="field-input resize-none"
-              placeholder={
-                mode === 'ingest'
-                  ? 'e.g., Cow 214 had a bull calf, gave her penicillin, spent $320 on hay...'
-                  : 'e.g., How many cows are pregnant and what did I spend on feed this month?'
-              }
             />
           </div>
 
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="w-full min-h-[54px] flex items-center justify-center gap-2 rounded-xl bg-[#1B4D2E] hover:bg-[#133922] disabled:opacity-50 text-white font-extrabold text-base border-2 border-[#141714] shadow-[0_2px_0_#141714] active:translate-y-0.5 transition"
+            className="w-full min-h-[50px] flex items-center justify-center gap-2 rounded-lg bg-[#173324] hover:bg-[#0F2419] disabled:opacity-50 text-white font-semibold text-sm transition"
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-4 h-4" />
             {loading
-              ? 'Running...'
+              ? 'Executing...'
               : mode === 'ingest'
-              ? 'Send Voice Note to /api/ai/ingest'
-              : 'Ask /api/ai/query'}
+              ? 'Send to /api/ai/ingest'
+              : 'Query /api/ai/query'}
           </button>
         </form>
 
         {result && (
           <div
-            className={`p-4 rounded-xl border-2 space-y-2 ${
-              result.ok
-                ? 'bg-[#DCFCE7] border-[#15803D] text-[#14532D]'
-                : 'bg-[#FEE2E2] border-[#B91C1C] text-[#7F1D1D]'
+            className={`p-4 rounded-lg bg-white border border-[#E2E0D9] border-l-[3px] space-y-2 ${
+              result.ok ? 'border-l-[#157347]' : 'border-l-[#B42318]'
             }`}
           >
-            <div className="flex items-start gap-2 font-extrabold text-base">
-              <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 font-semibold text-sm text-[#111312]">
+              <CheckCircle2
+                className={`w-4 h-4 shrink-0 mt-0.5 ${
+                  result.ok ? 'text-[#157347]' : 'text-[#B42318]'
+                }`}
+              />
               <span>{result.headline}</span>
             </div>
             {result.raw != null && (
               <details className="text-xs">
-                <summary className="cursor-pointer font-bold underline">
-                  Inspect JSON Response
+                <summary className="cursor-pointer font-semibold text-[#525753]">
+                  Inspect JSON Payload
                 </summary>
-                <pre className="mt-2 p-3 rounded-lg bg-[#141714] text-[#F4F1EA] overflow-x-auto font-mono text-xs leading-relaxed">
+                <pre className="mt-2 p-3 rounded-lg bg-[#111312] text-[#F5F4F0] overflow-x-auto font-mono text-xs leading-relaxed">
                   {JSON.stringify(result.raw, null, 2)}
                 </pre>
               </details>
@@ -190,21 +185,19 @@ export function InstinctAiDrawer({
           </div>
         )}
 
-        <div className="p-4 rounded-xl bg-white border-2 border-[#CFC8BA] flex items-center justify-between gap-3">
+        <div className="p-3.5 rounded-lg bg-white border border-[#E2E0D9] flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <Terminal className="w-5 h-5 text-[#1B4D2E] shrink-0" />
+            <Terminal className="w-4 h-4 text-[#525753] shrink-0" />
             <div>
-              <p className="font-extrabold text-sm text-[#141714]">OpenAPI 3.1 Schema</p>
-              <p className="text-xs font-medium text-[#474E47]">
-                Import directly into Instinct AI tools
-              </p>
+              <p className="font-semibold text-sm text-[#111312]">OpenAPI 3.1 Specification</p>
+              <p className="text-xs text-[#767C77]">Import directly into Instinct AI</p>
             </div>
           </div>
           <a
             href="/api/openapi"
             target="_blank"
             rel="noreferrer"
-            className="min-h-[44px] px-3.5 inline-flex items-center gap-1.5 rounded-xl bg-[#EBE6DC] hover:bg-[#DFD9CC] border-2 border-[#141714] text-xs font-extrabold text-[#141714]"
+            className="min-h-[38px] px-3 inline-flex items-center gap-1.5 rounded-md bg-[#F5F4F0] hover:bg-[#EFEDE8] border border-[#D6D3CB] text-xs font-mono font-semibold text-[#111312]"
           >
             openapi.json
             <ExternalLink className="w-3.5 h-3.5" />
