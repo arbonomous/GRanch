@@ -1,0 +1,79 @@
+{
+  "agent": "Instinct AI",
+  "app": "GRanch Operations",
+  "auth": {
+    "type": "bearer",
+    "header": "Authorization: Bearer <AI_API_KEY>"
+  },
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "granch_log_voice_note",
+        "description": "Log one or more cattle, calving, veterinary treatment, sale, chore, or financial events in a single atomic ranch transaction via POST /api/ai/ingest.",
+        "endpoint": "POST /api/ai/ingest",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "transcript": {
+              "type": "string",
+              "description": "Raw natural-language voice note from the rancher (e.g., 'Cow 214 had a bull calf this morning, gave her a shot of penicillin, and spent $320 on hay at the co-op')."
+            },
+            "actions": {
+              "type": "array",
+              "description": "Optional pre-parsed structured actions if Instinct AI extracts entities directly.",
+              "items": {
+                "type": "object",
+                "required": ["type"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["calving", "health", "sale", "breeding", "transaction", "log", "cow_update"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "granch_query_ranch",
+        "description": "Query live herd counts, due dates, animal profiles, active withdrawals, recent logs, or cash-flow totals via POST /api/ai/query.",
+        "endpoint": "POST /api/ai/query",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "question": {
+              "type": "string",
+              "description": "Natural-language question about the ranch (e.g., 'How many cows are pregnant and what did I spend on feed this month?')."
+            },
+            "action": {
+              "type": "string",
+              "enum": [
+                "herd_summary",
+                "due_dates",
+                "cow_lookup",
+                "financial_summary",
+                "recent_logs",
+                "sick_and_withdrawals"
+              ]
+            },
+            "params": {
+              "type": "object",
+              "properties": {
+                "tag_number": { "type": "string" },
+                "timeframe": { "type": "string", "enum": ["month", "year", "all"] },
+                "category": { "type": "string" },
+                "days": { "type": "integer" },
+                "limit": { "type": "integer" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

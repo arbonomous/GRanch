@@ -1,0 +1,25 @@
+{
+  "name": "GRanch — Cattle & Ranch Operations",
+  "short_name": "GRanch",
+  "description": "Mobile-first cattle herd management, daily field log, cash-flow ledger, and Instinct AI operations hub.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F7F5F0",
+  "theme_color": "#1B4D2E",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

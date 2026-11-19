@@ -1,0 +1,313 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "GRanch — Cattle & Ranch Operations API",
+    "version": "1.0.0",
+    "description": "REST API and Instinct AI voice/text integration endpoints for cattle herd management, health & withdrawal tracking, daily farm logs, and ranch cash-flow accounting."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Set AI_API_KEY in .env and pass Authorization: Bearer <AI_API_KEY> for all /api/ai/* endpoints."
+      }
+    },
+    "schemas": {
+      "CowCategory": {
+        "type": "string",
+        "enum": ["COW", "BULL", "HEIFER", "STEER", "CALF"]
+      },
+      "CowStatus": {
+        "type": "string",
+        "enum": ["ACTIVE", "PREGNANT", "NURSING", "SICK", "SOLD", "DECEASED"]
+      },
+      "HealthType": {
+        "type": "string",
+        "enum": ["VACCINATION", "MEDICATION", "INJURY", "CHECKUP", "CALVING_ASSIST"]
+      },
+      "LogCategory": {
+        "type": "string",
+        "enum": [
+          "CALVING",
+          "HEALTH_VET",
+          "FEEDING",
+          "FENCING_MAINTENANCE",
+          "PASTURE_ROTATION",
+          "EQUIPMENT",
+          "GENERAL"
+        ]
+      },
+      "TransactionType": {
+        "type": "string",
+        "enum": ["INCOME", "EXPENSE"]
+      },
+      "TransactionCategory": {
+        "type": "string",
+        "enum": [
+          "CATTLE_SALE",
+          "HAY_CROP_SALE",
+          "OTHER_INCOME",
+          "FEED_HAY",
+          "VET_MEDS",
+          "FUEL_EQUIPMENT",
+          "FENCING_REPAIRS",
+          "LABOR",
+          "UTILITIES_PROPERTY",
+          "OTHER_EXPENSE"
+        ]
+      },
+      "AiIngestRequest": {
+        "type": "object",
+        "description": "Provide a natural-language voice transcript OR pre-parsed structured actions.",
+        "properties": {
+          "transcript": {
+            "type": "string",
+            "example": "Cow 214 had a bull calf this morning, gave her a shot of penicillin, and spent $320 on hay at the co-op"
+          },
+          "raw_transcript": {
+            "type": "string",
+            "description": "Original voice transcript to preserve alongside structured actions."
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["calving", "health", "sale", "breeding", "transaction", "log", "cow_update"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "AiQueryRequest": {
+        "type": "object",
+        "description": "Provide a natural-language ranch question OR a deterministic structured action.",
+        "properties": {
+          "question": {
+            "type": "string",
+            "example": "How many cows are pregnant and what did I spend on feed this month?"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "herd_summary",
+              "due_dates",
+              "cow_lookup",
+              "financial_summary",
+              "recent_logs",
+              "sick_and_withdrawals"
+            ]
+          },
+          "params": {
+            "type": "object",
+            "properties": {
+              "tag_number": { "type": "string", "example": "214" },
+              "timeframe": { "type": "string", "enum": ["month", "year", "all"] },
+              "category": { "type": "string" },
+              "days": { "type": "integer", "default": 30 },
+              "limit": { "type": "integer", "default": 10 }
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/ai/ingest": {
+      "post": {
+        "operationId": "ingestRanchEvent",
+        "summary": "Log multi-step cattle, health, chore, or financial events atomically",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AiIngestRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Atomic transaction committed with plain-English confirmation message."
+          },
+          "400": { "description": "Invalid payload or unparseable input." },
+          "401": { "description": "Missing or invalid Bearer token." }
+        }
+      }
+    },
+    "/api/ai/query": {
+      "post": {
+        "operationId": "queryRanchData",
+        "summary": "Ask natural-language or structured questions about herd, due dates, withdrawals, logs, or cash flow",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AiQueryRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Structured query result + spoken-ready plain-English summary."
+          },
+          "401": { "description": "Missing or invalid Bearer token." }
+        }
+      }
+    },
+    "/api/dashboard": {
+      "get": {
+        "operationId": "getDashboard",
+        "summary": "Get live herd KPIs, cash flow snapshot, withdrawal alerts, and last 5 daily logs",
+        "responses": { "200": { "description": "Dashboard summary payload" } }
+      }
+    },
+    "/api/cows": {
+      "get": {
+        "operationId": "listCows",
+        "summary": "List and filter herd animals",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" } },
+          { "name": "filter", "in": "query", "schema": { "type": "string" } },
+          { "name": "tag_number", "in": "query", "schema": { "type": "string" } },
+          { "name": "category", "in": "query", "schema": { "$ref": "#/components/schemas/CowCategory" } },
+          { "name": "status", "in": "query", "schema": { "$ref": "#/components/schemas/CowStatus" } }
+        ],
+        "responses": { "200": { "description": "Filtered cattle list" } }
+      },
+      "post": {
+        "operationId": "createCow",
+        "summary": "Add a new animal (auto-calculates expected_due_date = breeding_date + 283 days)",
+        "responses": { "201": { "description": "Animal created" } }
+      }
+    },
+    "/api/cows/{id}": {
+      "get": {
+        "operationId": "getCowById",
+        "summary": "Get animal profile with lineage, medical history, daily logs, and transactions",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Animal profile" }, "404": { "description": "Not found" } }
+      },
+      "patch": {
+        "operationId": "updateCow",
+        "summary": "Update animal fields or status",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Animal updated" } }
+      },
+      "delete": {
+        "operationId": "deleteCow",
+        "summary": "Delete an animal record",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Deleted" } }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "listHealthRecords",
+        "summary": "List health records (optionally filtered by cow_id or active_withdrawal=true)",
+        "responses": { "200": { "description": "Health records list" } }
+      },
+      "post": {
+        "operationId": "createHealthRecord",
+        "summary": "Log a vaccination, medication, injury, checkup, or calving assist (auto-calculates safe_to_sell_date)",
+        "responses": { "201": { "description": "Health record created" } }
+      }
+    },
+    "/api/health/{id}": {
+      "get": {
+        "operationId": "getHealthRecord",
+        "summary": "Get a health record by ID",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Health record" } }
+      },
+      "patch": {
+        "operationId": "updateHealthRecord",
+        "summary": "Update a health record",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Updated" } }
+      },
+      "delete": {
+        "operationId": "deleteHealthRecord",
+        "summary": "Delete a health record",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Deleted" } }
+      }
+    },
+    "/api/logs": {
+      "get": {
+        "operationId": "listDailyLogs",
+        "summary": "List ranch daily activity logs",
+        "responses": { "200": { "description": "Daily logs list" } }
+      },
+      "post": {
+        "operationId": "createDailyLog",
+        "summary": "Create a daily farm log entry",
+        "responses": { "201": { "description": "Daily log created" } }
+      }
+    },
+    "/api/logs/{id}": {
+      "get": {
+        "operationId": "getDailyLog",
+        "summary": "Get a daily log by ID",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Daily log" } }
+      },
+      "patch": {
+        "operationId": "updateDailyLog",
+        "summary": "Update a daily log",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Updated" } }
+      },
+      "delete": {
+        "operationId": "deleteDailyLog",
+        "summary": "Delete a daily log",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Deleted" } }
+      }
+    },
+    "/api/transactions": {
+      "get": {
+        "operationId": "listTransactions",
+        "summary": "List cash-flow ledger entries with summary totals (timeframe=month|year|all)",
+        "responses": { "200": { "description": "Transactions and cash-flow totals" } }
+      },
+      "post": {
+        "operationId": "createTransaction",
+        "summary": "Log an income or expense transaction (CATTLE_SALE with cow_id atomically sets cow status to SOLD)",
+        "responses": { "201": { "description": "Transaction created" } }
+      }
+    },
+    "/api/transactions/{id}": {
+      "get": {
+        "operationId": "getTransaction",
+        "summary": "Get a transaction by ID",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Transaction" } }
+      },
+      "patch": {
+        "operationId": "updateTransaction",
+        "summary": "Update a transaction",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Updated" } }
+      },
+      "delete": {
+        "operationId": "deleteTransaction",
+        "summary": "Delete a transaction",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Deleted" } }
+      }
+    }
+  }
+}

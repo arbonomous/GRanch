@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Herd Inventory & Health
+/// category: COW | BULL | HEIFER | STEER | CALF
+/// status: ACTIVE | PREGNANT | NURSING | SICK | SOLD | DECEASED
+model Cow {
+  id                String         @id @default(uuid())
+  tag_number        String         @unique
+  name              String?
+  category          String         @default("COW")
+  status            String         @default("ACTIVE")
+  breed             String?
+  birth_date        DateTime?
+  breeding_date     DateTime?
+  expected_due_date DateTime?
+  dam_id            String?
+  sire_id           String?
+  notes             String         @default("")
+  created_at        DateTime       @default(now())
+  updated_at        DateTime       @updatedAt
+
+  dam               Cow?           @relation("DamCalves", fields: [dam_id], references: [id], onDelete: SetNull)
+  calves_as_dam     Cow[]          @relation("DamCalves")
+  sire              Cow?           @relation("SireCalves", fields: [sire_id], references: [id], onDelete: SetNull)
+  calves_as_sire    Cow[]          @relation("SireCalves")
+
+  health_records    HealthRecord[]
+  daily_logs        DailyLog[]
+  transactions      Transaction[]
+
+  @@index([tag_number])
+  @@index([status])
+  @@index([category])
+  @@map("cows")
+}
+
+/// Vaccinations, Treatments, Injuries
+/// type: VACCINATION | MEDICATION | INJURY | CHECKUP | CALVING_ASSIST
+model HealthRecord {
+  id                String    @id @default(uuid())
+  cow_id            String
+  date              DateTime  @default(now())
+  type              String
+  treatment_name    String
+  dosage            String?
+  withdrawal_days   Int?
+  safe_to_sell_date DateTime?
+  notes             String    @default("")
+  created_at        DateTime  @default(now())
+
+  cow               Cow       @relation(fields: [cow_id], references: [id], onDelete: Cascade)
+
+  @@index([cow_id])
+  @@index([date])
+  @@index([safe_to_sell_date])
+  @@map("health_records")
+}
+
+/// Unified Farm & Cattle Activity Feed
+/// category: CALVING | HEALTH_VET | FEEDING | FENCING_MAINTENANCE | PASTURE_ROTATION | EQUIPMENT | GENERAL
+model DailyLog {
+  id             String       @id @default(uuid())
+  timestamp      DateTime     @default(now())
+  category       String       @default("GENERAL")
+  summary        String
+  raw_transcript String?
+  cow_id         String?
+  transaction_id String?
+  created_at     DateTime     @default(now())
+
+  cow            Cow?         @relation(fields: [cow_id], references: [id], onDelete: SetNull)
+  transaction    Transaction? @relation(fields: [transaction_id], references: [id], onDelete: SetNull)
+
+  @@index([timestamp])
+  @@index([category])
+  @@index([cow_id])
+  @@index([transaction_id])
+  @@map("daily_logs")
+}
+
+/// Simple Cash-Flow Ledger
+/// type: INCOME | EXPENSE
+/// category: CATTLE_SALE | HAY_CROP_SALE | OTHER_INCOME | FEED_HAY | VET_MEDS | FUEL_EQUIPMENT | FENCING_REPAIRS | LABOR | UTILITIES_PROPERTY | OTHER_EXPENSE
+model Transaction {
+  id              String     @id @default(uuid())
+  date            DateTime   @default(now())
+  type            String
+  category        String
+  amount          Decimal
+  vendor_or_buyer String?
+  cow_id          String?
+  notes           String     @default("")
+  created_at      DateTime   @default(now())
+
+  cow             Cow?       @relation(fields: [cow_id], references: [id], onDelete: SetNull)
+  daily_logs      DailyLog[]
+
+  @@index([date])
+  @@index([type])
+  @@index([category])
+  @@index([cow_id])
+  @@map("transactions")
+}
