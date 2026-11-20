@@ -1,15 +1,27 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import path from 'path';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const filePath = path.join(process.cwd(), 'public', 'openapi.json');
     const content = await readFile(filePath, 'utf8');
-    return new NextResponse(content, {
+    const spec = JSON.parse(content);
+
+    const origin = request.nextUrl.origin;
+    if (origin && Array.isArray(spec.servers)) {
+      spec.servers = [
+        {
+          url: origin,
+          description: 'Active GRanch deployment',
+        },
+      ];
+    }
+
+    return NextResponse.json(spec, {
       status: 200,
       headers: {
-        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-store',
       },
     });
   } catch {

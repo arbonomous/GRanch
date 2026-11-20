@@ -1,18 +1,20 @@
 # GRanch — Cattle & Ranch Operations Web App & Instinct AI API
 
-A mobile-first, high-contrast Progressive Web App (PWA) and relational REST API built for outdoor cattle & ranch operations. Designed to be operated primarily by **Instinct AI** via voice/text commands while providing a clean, sunlight-legible UI for manual field review and quick edits.
+A mobile-first, high-contrast Progressive Web App (PWA) and relational PostgreSQL REST API built for outdoor cattle & ranch operations. Designed to be operated primarily by **Instinct AI** via voice/text commands while providing a clean, sunlight-legible UI for manual field review and quick edits.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Farbonomous%2FGRanch&env=DATABASE_URL,AI_API_KEY&envDescription=PostgreSQL%20DATABASE_URL%20and%20secret%20AI_API_KEY%20for%20Instinct%20AI&project-name=granch&repository-name=GRanch)
 
 ---
 
 ## Table of Contents
-1. [Instinct AI Handoff & Integration Guide](#instinct-ai-handoff--integration-guide)
-2. [Endpoint Reference: `/api/ai/ingest` (Atomic Multi-Action Writer)](#1-post-apiaiingest-atomic-multi-action-writer)
-3. [Endpoint Reference: `/api/ai/query` (Ranch Read & Reporting)](#2-post-apiaiquery-ranch-read--reporting)
-4. [Standard REST CRUD Endpoints](#3-standard-rest-crud-endpoints)
-5. [Database Schema & Allowed Enum Values](#database-schema--allowed-enum-values)
-6. [Environment Variables](#environment-variables)
-7. [Local Setup & Seed Data](#local-setup--seed-data)
-8. [Cloud Deployment (Vercel / Railway / Render)](#cloud-deployment-vercel--railway--render)
+1. [2-Minute Cloud Deployment (Vercel or Railway)](#cloud-deployment-vercel--railway--render)
+2. [Instinct AI Handoff & Integration Guide](#instinct-ai-handoff--integration-guide)
+3. [Endpoint Reference: `/api/ai/ingest` (Atomic Multi-Action Writer)](#1-post-apiaiingest-atomic-multi-action-writer)
+4. [Endpoint Reference: `/api/ai/query` (Ranch Read & Reporting)](#2-post-apiaiquery-ranch-read--reporting)
+5. [Standard REST CRUD Endpoints](#3-standard-rest-crud-endpoints)
+6. [Database Schema & Allowed Enum Values](#database-schema--allowed-enum-values)
+7. [Environment Variables](#environment-variables)
+8. [Local Setup & Seed Data](#local-setup--seed-data)
 
 ---
 
@@ -200,8 +202,9 @@ Copy `.env.example` to `.env`:
 
 | Variable | Required | Default / Example | Purpose |
 | --- | --- | --- | --- |
-| `DATABASE_URL` | Yes | `file:./dev.db` | SQLite file path or PostgreSQL connection string (`postgresql://...`). |
+| `DATABASE_URL` | Yes | `postgresql://...` | PostgreSQL connection string (Neon, Supabase, Vercel Postgres, Railway, or local Postgres). |
 | `AI_API_KEY` | Yes | `granch-instinct-dev-key-change-me` | **Change in production.** Secret Bearer token for all `/api/ai/*` routes. |
+| `SEED_ON_EMPTY` | No | `true` | Automatically seeds 15 sample cattle, 10 logs, and 8 transactions on first cloud deploy if the database is empty. Never overwrites existing cattle on future deploys. Set to `false` to start blank. |
 | `OPENAI_API_KEY` | No | *(empty)* | Optional OpenAI key for LLM-powered parsing on `/api/ai/ingest`. Falls back to built-in deterministic parser if unset. |
 | `OPENAI_MODEL` | No | `gpt-4o-mini` | Model used when `OPENAI_API_KEY` is provided. |
 
@@ -214,6 +217,7 @@ git clone https://github.com/arbonomous/GRanch.git
 cd GRanch
 npm install
 cp .env.example .env
+# Set DATABASE_URL in .env to your PostgreSQL URL
 npm run db:push
 npm run db:seed
 npm run dev
@@ -221,42 +225,37 @@ npm run dev
 
 ### NPM Scripts
 - `npm run dev` — Start Next.js development server on port 3000
-- `npm run build` / `npm run start` — Production build and start
-- `npm run db:push` — Sync `prisma/schema.prisma` to the database
+- `npm run build` / `npm run start` — Runs `scripts/cloud-prepare.mjs` (Prisma generate + automatic PostgreSQL `db push` + safe `--if-empty` seed) and builds/starts Next.js
+- `npm run db:push` — Sync `prisma/schema.prisma` to PostgreSQL
 - `npm run db:seed` — Seed realistic ranch sample data (15 cattle, 6 health records, 10 daily logs, 8 transactions)
+- `npm run db:seed:if-empty` — Seed sample data only if the `cows` table has 0 rows
 - `npm run db:reset` — Wipe and re-seed the database cleanly
 
 ---
 
 ## Cloud Deployment (Vercel / Railway / Render)
 
-For **Instinct AI** to reach GRanch over public HTTPS and to install the PWA on your phone in the field, deploy to a cloud host with PostgreSQL:
+`prisma/schema.prisma` is preconfigured for **PostgreSQL**, and `npm run build` automatically pushes the database tables and seeds sample data on first deploy (`--if-empty`, so subsequent deploys never overwrite live ranch data).
 
-### Vercel + PostgreSQL (Neon / Supabase / Vercel Postgres)
-1. In `prisma/schema.prisma`, change the datasource provider from `sqlite` to `postgresql`:
-   ```prisma
-   datasource db {
-     provider = "postgresql"
-     url      = env("DATABASE_URL")
-   }
-   ```
-2. Import `arbonomous/GRanch` into Vercel and attach a managed PostgreSQL database (`DATABASE_URL`).
-3. Add environment variables in Vercel Project Settings:
-   - `DATABASE_URL` (PostgreSQL URL)
-   - `AI_API_KEY` (generate a strong random secret and share it with Instinct AI)
-   - `OPENAI_API_KEY` (optional)
-4. Push schema & optional initial seed once against your production DB:
-   ```bash
-   DATABASE_URL="<PROD_POSTGRES_URL>" npx prisma db push
-   # Optional sample data:
-   DATABASE_URL="<PROD_POSTGRES_URL>" npm run db:seed
-   ```
-5. Point Instinct AI at `https://<your-vercel-domain>/api/openapi` (or configure `POST /api/ai/ingest` and `POST /api/ai/query` with `Authorization: Bearer <AI_API_KEY>`).
+### Option A: Vercel + Neon Postgres (Free Tier, ~2 Minutes)
+1. Click **Deploy with Vercel** above (or go to [vercel.com/new](https://vercel.com/new) and import `arbonomous/GRanch`).
+2. Attach a free PostgreSQL database:
+   - In Vercel, open **Storage → Create Database → Neon (Serverless Postgres)** (or paste a free `DATABASE_URL` from [neon.tech](https://neon.tech) / [supabase.com](https://supabase.com)).
+3. Set Environment Variables in Vercel:
+   - `DATABASE_URL` *(auto-filled if you use Vercel Storage / Neon integration)*
+   - `AI_API_KEY` *(pick any strong secret string, e.g. `granch-prod-9f8e7d6c`)*
+   - `OPENAI_API_KEY` *(optional)*
+4. Click **Deploy**. On deploy, `scripts/cloud-prepare.mjs` automatically creates all 4 PostgreSQL tables and seeds the initial 15 cattle, 10 logs, and 8 transactions.
+5. Open your live `https://<your-project>.vercel.app` URL on desktop or phone (tap **Add to Home Screen** to install as a PWA).
+6. Connect **Instinct AI** to `https://<your-project>.vercel.app/api/openapi` (which automatically advertises your live HTTPS domain) with `Authorization: Bearer <AI_API_KEY>`.
 
-### Railway / Render
-1. Connect `arbonomous/GRanch` and attach a PostgreSQL plugin (or mount a persistent disk if keeping SQLite).
-2. Set `DATABASE_URL`, `AI_API_KEY`, and optionally `OPENAI_API_KEY`.
-3. Set start command to `npx prisma db push && npm run start`.
+### Option B: Railway (~2 Minutes)
+1. Go to [railway.com/new](https://railway.com/new) → **Deploy from GitHub repo** → select `arbonomous/GRanch`.
+2. Click **+ New → Database → Add PostgreSQL**.
+3. In the GRanch service **Variables** tab, add:
+   - `DATABASE_URL=${{Postgres.DATABASE_URL}}`
+   - `AI_API_KEY=<your-secret-key>`
+4. Click **Generate Domain** under Settings → Networking to get your live HTTPS URL.
 
 ---
 

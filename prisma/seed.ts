@@ -18,6 +18,15 @@ function addDays(date: Date, days: number): Date {
 }
 
 async function main() {
+  const ifEmptyOnly = process.argv.includes('--if-empty');
+  if (ifEmptyOnly) {
+    const existing = await prisma.cow.count();
+    if (existing > 0) {
+      console.log(`Database already has ${existing} cattle; skipping seed (--if-empty).`);
+      return;
+    }
+  }
+
   console.log('Seeding GRanch database...');
 
   // Clear existing data in dependency order for idempotent re-seeding
