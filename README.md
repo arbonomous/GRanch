@@ -21,28 +21,35 @@ A mobile-first, high-contrast Progressive Web App (PWA) and relational PostgreSQ
 ## Instinct AI Handoff & Integration Guide
 
 ### Machine-Readable Schemas
-- **OpenAPI 3.1.0 Spec:** `GET /api/openapi` (source file: `public/openapi.json`)
+- **OpenAPI 3.1.0 Spec (Protected):** `GET /api/openapi` — requires `Authorization: Bearer <AI_API_KEY>` (or signed-in owner session). Source file: `src/lib/openapi.json`.
 - **Tool / Function Definitions:** `docs/instinct-ai-tools.json`
 
-### Authentication (Required on All `/api/ai/*` Routes)
-Every request to `/api/ai/ingest` and `/api/ai/query` must include:
+### Authentication & Access Matrix (All Routes Locked Down)
+GRanch fails closed until `RANCH_PASSCODE` is configured. Every UI route and API route requires authentication:
+
+| Route Group | Auth Accepted | Notes |
+| --- | --- | --- |
+| UI pages (`/`, `/herd`, `/logs`, `/finances`) | Signed 30-day `HttpOnly` cookie (`RANCH_PASSCODE` via `/login`) | Brute-force rate-limited in Postgres (5 failed attempts / 15 min per IP). |
+| `POST /api/ai/ingest` & `POST /api/ai/query` | `Authorization: Bearer <AI_API_KEY>` **or** owner session | Supports `Idempotency-Key` header on `/api/ai/ingest` and writes every call to `ai_audit_logs`. |
+| `GET / POST / PATCH` on `/api/cows`, `/api/health`, `/api/logs`, `/api/transactions`, `/api/dashboard`, `/api/openapi` | `Authorization: Bearer <AI_API_KEY>` **or** owner session | Constant-time token verification (`401` if unauthenticated). |
+| `DELETE` on all CRUD routes + `/api/admin/*` (Export, Audit Log, Clear Sample Data) | **Owner session ONLY** | Instinct AI Bearer tokens receive `403 Forbidden` so an AI agent can never delete cattle or financial records. |
+
+Every external Instinct AI request must include:
 
 ```http
 Authorization: Bearer <AI_API_KEY>
 Content-Type: application/json
+Idempotency-Key: <optional-unique-request-id>   # recommended on POST /api/ai/ingest
 ```
 
-- Verified using constant-time comparison (`crypto.timingSafeEqual`) against `process.env.AI_API_KEY`.
-- Missing or invalid tokens return `401 Unauthorized` with `{ "error": "..." }`.
-
 ### Recommended Agent Routing Rules for Instinct AI
-1. **Logging ranch events (voice or text):** Call `POST /api/ai/ingest`.
+1. **Logging ranch events (voice or text):** Call `POST /api/ai/ingest` with a unique `Idempotency-Key` header so network retries never double-log calves or expenses.
    - Pass `{ "transcript": "<user's raw utterance>" }` for automatic multi-action parsing, **or** pass pre-parsed `{ "actions": [...], "raw_transcript": "<utterance>" }` for deterministic execution.
    - Read the returned `message` string directly back to the user as confirmation.
 2. **Answering ranch questions:** Call `POST /api/ai/query`.
    - Pass `{ "question": "<user's question>" }` for compound natural-language queries, **or** `{ "action": "<action>", "params": { ... } }` for deterministic structured lookups.
    - Read the returned `summary` string directly back to the user.
-3. **Exact record lookups / manual overrides / deletes:** Use the standard REST endpoints (`/api/cows`, `/api/health`, `/api/logs`, `/api/transactions`).
+3. **Exact record lookups / updates:** Use `GET / POST / PATCH` on `/api/cows`, `/api/health`, `/api/logs`, `/api/transactions`. (`DELETE` is intentionally owner-only.)
 
 ---
 
@@ -203,7 +210,9 @@ Copy `.env.example` to `.env`:
 | Variable | Required | Default / Example | Purpose |
 | --- | --- | --- | --- |
 | `DATABASE_URL` | Yes | `postgresql://...` | PostgreSQL connection string (Neon, Supabase, Vercel Postgres, Railway, or local Postgres). |
-| `AI_API_KEY` | Yes | `granch-instinct-dev-key-change-me` | **Change in production.** Secret Bearer token for all `/api/ai/*` routes. |
+| `RANCH_PASSCODE` | Yes | *(set in Vercel)* | Passcode required on `/login` to unlock the GRanch web app (app fails closed until configured). |
+| `AI_API_KEY` | Yes | `granch-instinct-dev-key-change-me` | **Change in production.** Secret Bearer token for Instinct AI API access. |
+| `SESSION_SECRET` | No | *(auto-derived)* | Optional dedicated HMAC secret for 30-day session cookies (derives via SHA-256 from `RANCH_PASSCODE + AI_API_KEY` if omitted). |
 | `SEED_ON_EMPTY` | No | `true` | Automatically seeds 15 sample cattle, 10 logs, and 8 transactions on first cloud deploy if the database is empty. Never overwrites existing cattle on future deploys. Set to `false` to start blank. |
 | `OPENAI_API_KEY` | No | *(empty)* | Optional OpenAI key for LLM-powered parsing on `/api/ai/ingest`. Falls back to built-in deterministic parser if unset. |
 | `OPENAI_MODEL` | No | `gpt-4o-mini` | Model used when `OPENAI_API_KEY` is provided. |

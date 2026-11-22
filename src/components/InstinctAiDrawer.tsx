@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CheckCircle2, ExternalLink, KeyRound, Send, Terminal } from 'lucide-react';
+import { CheckCircle2, ExternalLink, KeyRound, Send, ShieldCheck, Terminal } from 'lucide-react';
 import { ModalSheet } from './Badges';
 
 const SAMPLE_INGEST =
@@ -39,12 +39,19 @@ export function InstinctAiDrawer({
           ? { transcript: input.trim() }
           : { question: input.trim() };
 
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (apiKey.trim()) {
+        headers.Authorization = `Bearer ${apiKey.trim()}`;
+      }
+      if (mode === 'ingest' && typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+        headers['Idempotency-Key'] = `ui-${crypto.randomUUID()}`;
+      }
+
       const res = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(apiKey.trim() ? { Authorization: `Bearer ${apiKey.trim()}` } : {}),
-        },
+        headers,
         body: JSON.stringify(body),
       });
 
@@ -78,9 +85,17 @@ export function InstinctAiDrawer({
       open={open}
       onClose={onClose}
       title="Instinct AI Console"
-      subtitle="Authenticated endpoint tester for /api/ai/ingest & /api/ai/query"
+      subtitle="Run multi-action voice notes or natural-language ranch queries"
     >
       <div className="space-y-4">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-[#E2E0D9] text-xs text-[#525753]">
+          <ShieldCheck className="w-4 h-4 text-[#157347] shrink-0" />
+          <span>
+            Authenticated via your owner session. External Instinct AI calls require{' '}
+            <code className="font-mono text-[#111312]">Bearer AI_API_KEY</code>.
+          </span>
+        </div>
+
         <div className="grid grid-cols-2 gap-1 p-1 bg-[#EFEDE8] rounded-lg border border-[#E2E0D9]">
           <button
             type="button"
@@ -116,22 +131,6 @@ export function InstinctAiDrawer({
 
         <form onSubmit={handleRun} className="space-y-4">
           <div>
-            <label htmlFor="instinct-api-key" className="field-label flex items-center gap-1.5">
-              <KeyRound className="w-3.5 h-3.5" />
-              Bearer API Key (AI_API_KEY)
-            </label>
-            <input
-              id="instinct-api-key"
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Paste AI_API_KEY from .env"
-              className="field-input font-mono text-sm"
-              autoComplete="off"
-            />
-          </div>
-
-          <div>
             <label htmlFor="instinct-input" className="field-label">
               {mode === 'ingest' ? 'Voice / Text Transcript' : 'Ranch Query'}
             </label>
@@ -143,6 +142,24 @@ export function InstinctAiDrawer({
               className="field-input resize-none"
             />
           </div>
+
+          <details className="text-xs">
+            <summary className="cursor-pointer font-semibold text-[#767C77] hover:text-[#111312] inline-flex items-center gap-1.5">
+              <KeyRound className="w-3.5 h-3.5" />
+              Optional: Override with External Bearer Key
+            </summary>
+            <div className="mt-2">
+              <input
+                id="instinct-api-key"
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Leave blank to use signed-in owner session"
+                className="field-input font-mono text-xs min-h-[42px]!"
+                autoComplete="off"
+              />
+            </div>
+          </details>
 
           <button
             type="submit"
@@ -189,8 +206,8 @@ export function InstinctAiDrawer({
           <div className="flex items-center gap-2.5">
             <Terminal className="w-4 h-4 text-[#525753] shrink-0" />
             <div>
-              <p className="font-semibold text-sm text-[#111312]">OpenAPI 3.1 Specification</p>
-              <p className="text-xs text-[#767C77]">Import directly into Instinct AI</p>
+              <p className="font-semibold text-sm text-[#111312]">Protected OpenAPI 3.1 Spec</p>
+              <p className="text-xs text-[#767C77]">Requires owner session or Bearer key</p>
             </div>
           </div>
           <a

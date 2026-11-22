@@ -1,30 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile } from 'fs/promises';
-import path from 'path';
+import { requireAuth } from '@/lib/auth';
+import openApiSpec from '@/lib/openapi.json';
 
 export async function GET(request: NextRequest) {
-  try {
-    const filePath = path.join(process.cwd(), 'public', 'openapi.json');
-    const content = await readFile(filePath, 'utf8');
-    const spec = JSON.parse(content);
+  const auth = await requireAuth(request, 'dual');
+  if (!auth.ok) return auth.response;
 
-    const origin = request.nextUrl.origin;
-    if (origin && Array.isArray(spec.servers)) {
-      spec.servers = [
-        {
-          url: origin,
-          description: 'Active GRanch deployment',
-        },
-      ];
-    }
-
-    return NextResponse.json(spec, {
-      status: 200,
-      headers: {
-        'Cache-Control': 'no-store',
+  const spec = structuredClone(openApiSpec);
+  const origin = request.nextUrl.origin;
+  if (origin && Array.isArray(spec.servers)) {
+    spec.servers = [
+      {
+        url: origin,
+        description: 'Active GRanch deployment',
       },
-    });
-  } catch {
-    return NextResponse.json({ error: 'OpenAPI spec not found.' }, { status: 404 });
+    ];
   }
+
+  return NextResponse.json(spec, {
+    status: 200,
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  });
 }

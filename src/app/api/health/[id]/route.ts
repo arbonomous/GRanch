@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { requireAuth } from '@/lib/auth';
 import { updateHealthRecordSchema } from '@/lib/validation';
 import { calculateSafeToSellDate, parseDateInput } from '@/lib/dates';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAuth(request, 'dual');
+  if (!auth.ok) return auth.response;
+
   try {
     const { id } = await context.params;
     const record = await prisma.healthRecord.findUnique({
@@ -30,6 +34,9 @@ export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAuth(request, 'dual');
+  if (!auth.ok) return auth.response;
+
   try {
     const { id } = await context.params;
     const body = await request.json();
@@ -73,9 +80,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAuth(request, 'session_only');
+  if (!auth.ok) return auth.response;
+
   try {
     const { id } = await context.params;
     await prisma.healthRecord.delete({ where: { id } });

@@ -123,12 +123,22 @@
       }
     }
   },
+  "security": [{ "BearerAuth": [] }],
   "paths": {
     "/api/ai/ingest": {
       "post": {
         "operationId": "ingestRanchEvent",
-        "summary": "Log multi-step cattle, health, chore, or financial events atomically",
+        "summary": "Log multi-step cattle, health, chore, or financial events atomically (supports Idempotency-Key deduplication and writes to ai_audit_logs)",
         "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Optional unique request ID so retried network requests replay the cached response without double-logging.",
+            "schema": { "type": "string", "maxLength": 128 }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {

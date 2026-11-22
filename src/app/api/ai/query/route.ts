@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAiAuth } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth';
 import { aiQueryRequestSchema } from '@/lib/validation';
 import { executeAiQuery } from '@/lib/ranch-queries';
 
 export async function POST(request: NextRequest) {
-  const authError = verifyAiAuth(request);
-  if (authError) return authError;
+  const auth = await requireAuth(request, 'dual');
+  if (!auth.ok) return auth.response;
 
   try {
     const body = await request.json();

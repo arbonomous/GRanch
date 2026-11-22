@@ -1,17 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAiAuth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { requireAuth } from '@/lib/auth';
 import { aiIngestRequestSchema } from '@/lib/validation';
 import { parseTranscriptToActions } from '@/lib/ai-parser';
 import { executeAiActionsAtomically } from '@/lib/ai-executor';
 
 export async function POST(request: NextRequest) {
-  const authError = verifyAiAuth(request);
-  if (authError) return authError;
+  const auth = await requireAuth(request, 'dual');
+  if (!auth.ok) return auth.response;
 
   try {
     const body = await request.json();
-    const parsed = aiIngestRequestSchema.safeParse(body);
 
+    // Idempotency-Key header (or optional body.idempotency_key) prevents duplicate retries
+    const rawKey =
+      request.headers.get('idempotency-key')?.trim() ||
+      (typeof body?.idempotency_key === 'string' ? body.idempotency_key.trim() : '') ||
+      null;
+    const idempotencyKey = rawKey ? rawKey.slice(0, 128) : null;
+
+    if (idempotencyKey) {
+      const existingAudit = await prisma.aiAuditLog.findUnique({
+        where: { idempotency_key: idempotencyKey },
+      });
+      if (existingAudit) {
+        const cachedPayload = JSON.parse(existingAudit.response_payload);
+        return NextResponse.json(
+          {
+            ...cachedPayload,
+            replayed: true,
+            idempotency_key: idempotencyKey,
+          },
+          { status: 200 }
+        );
+      }
+    }
+
+    const parsed = aiIngestRequestSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         {
@@ -48,16 +73,32 @@ export async function POST(request: NextRequest) {
       raw_transcript ?? transcript ?? null
     );
 
-    return NextResponse.json(
-      {
-        ok: true,
+    const responsePayload = {
+      ok: true,
+      source: auth.actor === 'instinct_ai' ? 'instinct_ai' : 'ui_console',
+      parser,
+      parsed_actions: actionsToRun,
+      message: execution.message,
+      results: execution.results,
+      ...(idempotencyKey ? { idempotency_key: idempotencyKey } : {}),
+    };
+
+    // Record persistent audit entry (and idempotency cache)
+    await prisma.aiAuditLog.create({
+      data: {
+        idempotency_key: idempotencyKey,
+        source: responsePayload.source,
+        endpoint: '/api/ai/ingest',
         parser,
-        parsed_actions: actionsToRun,
-        message: execution.message,
-        results: execution.results,
+        raw_transcript: raw_transcript ?? transcript ?? null,
+        parsed_actions: JSON.stringify(actionsToRun),
+        status_code: 201,
+        response_message: execution.message,
+        response_payload: JSON.stringify(responsePayload),
       },
-      { status: 201 }
-    );
+    });
+
+    return NextResponse.json(responsePayload, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to ingest ranch event.';
     const status = message.includes('was not found') ? 404 : 500;

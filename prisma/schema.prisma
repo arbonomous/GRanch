@@ -108,3 +108,31 @@ model Transaction {
   @@index([cow_id])
   @@map("transactions")
 }
+
+/// Persistent Audit Log & Idempotency Store for Instinct AI Writes
+model AiAuditLog {
+  id               String   @id @default(uuid())
+  idempotency_key  String?  @unique
+  source           String   @default("instinct_ai")
+  endpoint         String   @default("/api/ai/ingest")
+  parser           String
+  raw_transcript   String?
+  parsed_actions   String
+  status_code      Int
+  response_message String
+  response_payload String
+  created_at       DateTime @default(now())
+
+  @@index([created_at])
+  @@map("ai_audit_logs")
+}
+
+/// Distributed Brute-Force Rate Limiting for Ranch Passcode Login
+model LoginAttempt {
+  id         String   @id @default(uuid())
+  ip         String
+  created_at DateTime @default(now())
+
+  @@index([ip, created_at])
+  @@map("login_attempts")
+}

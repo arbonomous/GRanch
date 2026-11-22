@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { requireAuth } from '@/lib/auth';
 import { createCowSchema } from '@/lib/validation';
 import {
   addDays,
@@ -11,6 +12,9 @@ import {
 import { ACTIVE_COW_STATUSES } from '@/lib/constants';
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth(request, 'dual');
+  if (!auth.ok) return auth.response;
+
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q')?.trim().toLowerCase() ?? '';
@@ -105,6 +109,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request, 'dual');
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await request.json();
     const parsed = createCowSchema.safeParse(body);

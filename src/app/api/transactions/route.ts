@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { requireAuth } from '@/lib/auth';
 import { createTransactionSchema } from '@/lib/validation';
 import { formatCurrency, parseDateInput } from '@/lib/dates';
 import { getFinancialSummary } from '@/lib/ranch-queries';
 import { TRANSACTION_CATEGORY_LABELS } from '@/lib/constants';
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth(request, 'dual');
+  if (!auth.ok) return auth.response;
+
   try {
     const { searchParams } = new URL(request.url);
     const timeframeParam = searchParams.get('timeframe')?.toLowerCase() ?? 'month';
@@ -35,6 +39,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request, 'dual');
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await request.json();
     const parsed = createTransactionSchema.safeParse(body);

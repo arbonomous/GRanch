@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAuth } from '@/lib/auth';
 import { createHealthRecordSchema } from '@/lib/validation';
 import { calculateSafeToSellDate, parseDateInput, startOfDay } from '@/lib/dates';
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth(request, 'dual');
+  if (!auth.ok) return auth.response;
+
   try {
     const { searchParams } = new URL(request.url);
     const cowId = searchParams.get('cow_id')?.trim();
@@ -33,6 +37,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request, 'dual');
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await request.json();
     const parsed = createHealthRecordSchema.safeParse(body);

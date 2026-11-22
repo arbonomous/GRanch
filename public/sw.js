@@ -1,9 +1,9 @@
-const CACHE_NAME = 'granch-shell-v1';
-const APP_SHELL = ['/', '/herd', '/logs', '/finances', '/manifest.json'];
+const CACHE_NAME = 'granch-assets-v2';
+const PUBLIC_ASSETS = ['/manifest.json', '/icon.svg', '/icon-512.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).catch(() => {})
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PUBLIC_ASSETS)).catch(() => {})
   );
   self.skipWaiting();
 });
@@ -22,19 +22,14 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
-  if (url.pathname.startsWith('/api/')) {
+  // Never cache authenticated API routes or protected HTML pages
+  if (url.pathname.startsWith('/api/') || request.mode === 'navigate') {
     return;
   }
 
-  event.respondWith(
-    fetch(request)
-      .then((response) => {
-        if (response.ok && url.origin === self.location.origin) {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
-        }
-        return response;
-      })
-      .catch(() => caches.match(request))
-  );
+  if (PUBLIC_ASSETS.includes(url.pathname)) {
+    event.respondWith(
+      caches.match(request).then((cached) => cached || fetch(request))
+    );
+  }
 });

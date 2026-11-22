@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAuth } from '@/lib/auth';
 import { createDailyLogSchema } from '@/lib/validation';
 import { parseDateInput } from '@/lib/dates';
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth(request, 'dual');
+  if (!auth.ok) return auth.response;
+
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category')?.trim().toUpperCase();
@@ -42,6 +46,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request, 'dual');
+  if (!auth.ok) return auth.response;
+
   try {
     const body = await request.json();
     const parsed = createDailyLogSchema.safeParse(body);
