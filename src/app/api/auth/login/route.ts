@@ -12,6 +12,69 @@ import {
 const MAX_FAILED_ATTEMPTS = 5;
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
+// In-memory fallback limiter if PostgreSQL login_attempts table is unavailable
+const memoryAttempts = new Map<string, number[]>();
+
+function getMemoryAttempts(ip: string, now: number): number[] {
+  const cutoff = now - WINDOW_MS;
+  const fresh = (memoryAttempts.get(ip) ?? []).filter((ts) => ts >= cutoff);
+  memoryAttempts.set(ip, fresh);
+  return fresh;
+}
+
+async function getRecentFailures(ip: string): Promise<{ count: number; oldestMs: number | null; mode: 'db' | 'memory' }> {
+  const now = Date.now();
+  const windowStart = new Date(now - WINDOW_MS);
+  try {
+    await prisma.loginAttempt.deleteMany({
+      where: { created_at: { lt: windowStart } },
+    });
+    const rows = await prisma.loginAttempt.findMany({
+      where: { ip, created_at: { gte: windowStart } },
+      orderBy: { created_at: 'asc' },
+    });
+    return {
+      count: rows.length,
+      oldestMs: rows[0]?.created_at.getTime() ?? null,
+      mode: 'db',
+    };
+  } catch (err) {
+    console.warn('[GRanch Login] Falling back to in-memory rate limit:', err);
+    const list = getMemoryAttempts(ip, now);
+    return {
+      count: list.length,
+      oldestMs: list[0] ?? null,
+      mode: 'memory',
+    };
+  }
+}
+
+async function recordFailure(ip: string, mode: 'db' | 'memory') {
+  if (mode === 'db') {
+    try {
+      await prisma.loginAttempt.create({ data: { ip } });
+      return;
+    } catch {
+      // Fall through to memory recorder
+    }
+  }
+  const now = Date.now();
+  const list = getMemoryAttempts(ip, now);
+  list.push(now);
+  memoryAttempts.set(ip, list);
+}
+
+async function clearFailures(ip: string, mode: 'db' | 'memory') {
+  memoryAttempts.delete(ip);
+  if (mode === 'db') {
+    try {
+      await prisma.loginAttempt.deleteMany({ where: { ip } });
+    } catch {
+      // Non-fatal
+    }
+  }
+}
+
 export async function POST(request: NextRequest) {
   if (!isPasscodeConfigured()) {
     return NextResponse.json(
@@ -25,24 +88,12 @@ export async function POST(request: NextRequest) {
   }
 
   const ip = getClientIp(request);
-  const windowStart = new Date(Date.now() - WINDOW_MS);
 
   try {
-    // Prune stale attempts older than 15 minutes and count recent failures for this IP
-    await prisma.loginAttempt.deleteMany({
-      where: { created_at: { lt: windowStart } },
-    });
+    const rate = await getRecentFailures(ip);
 
-    const recentAttempts = await prisma.loginAttempt.findMany({
-      where: {
-        ip,
-        created_at: { gte: windowStart },
-      },
-      orderBy: { created_at: 'asc' },
-    });
-
-    if (recentAttempts.length >= MAX_FAILED_ATTEMPTS) {
-      const oldest = recentAttempts[0].created_at.getTime();
+    if (rate.count >= MAX_FAILED_ATTEMPTS) {
+      const oldest = rate.oldestMs ?? Date.now();
       const retryMinutes = Math.max(1, Math.ceil((oldest + WINDOW_MS - Date.now()) / 60000));
       return NextResponse.json(
         {
@@ -60,8 +111,8 @@ export async function POST(request: NextRequest) {
 
     const valid = await verifyPasscode(passcode);
     if (!valid) {
-      await prisma.loginAttempt.create({ data: { ip } });
-      const remaining = Math.max(0, MAX_FAILED_ATTEMPTS - (recentAttempts.length + 1));
+      await recordFailure(ip, rate.mode);
+      const remaining = Math.max(0, MAX_FAILED_ATTEMPTS - (rate.count + 1));
       return NextResponse.json(
         {
           ok: false,
@@ -76,8 +127,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Clear failed attempts on successful login
-    await prisma.loginAttempt.deleteMany({ where: { ip } });
+    await clearFailures(ip, rate.mode);
 
     const token = await createSessionToken();
     if (!token) {

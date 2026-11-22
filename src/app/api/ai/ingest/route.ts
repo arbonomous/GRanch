@@ -20,19 +20,23 @@ export async function POST(request: NextRequest) {
     const idempotencyKey = rawKey ? rawKey.slice(0, 128) : null;
 
     if (idempotencyKey) {
-      const existingAudit = await prisma.aiAuditLog.findUnique({
-        where: { idempotency_key: idempotencyKey },
-      });
-      if (existingAudit) {
-        const cachedPayload = JSON.parse(existingAudit.response_payload);
-        return NextResponse.json(
-          {
-            ...cachedPayload,
-            replayed: true,
-            idempotency_key: idempotencyKey,
-          },
-          { status: 200 }
-        );
+      try {
+        const existingAudit = await prisma.aiAuditLog.findUnique({
+          where: { idempotency_key: idempotencyKey },
+        });
+        if (existingAudit) {
+          const cachedPayload = JSON.parse(existingAudit.response_payload);
+          return NextResponse.json(
+            {
+              ...cachedPayload,
+              replayed: true,
+              idempotency_key: idempotencyKey,
+            },
+            { status: 200 }
+          );
+        }
+      } catch (auditLookupErr) {
+        console.warn('[GRanch Ingest] Skipping idempotency lookup:', auditLookupErr);
       }
     }
 
@@ -84,19 +88,23 @@ export async function POST(request: NextRequest) {
     };
 
     // Record persistent audit entry (and idempotency cache)
-    await prisma.aiAuditLog.create({
-      data: {
-        idempotency_key: idempotencyKey,
-        source: responsePayload.source,
-        endpoint: '/api/ai/ingest',
-        parser,
-        raw_transcript: raw_transcript ?? transcript ?? null,
-        parsed_actions: JSON.stringify(actionsToRun),
-        status_code: 201,
-        response_message: execution.message,
-        response_payload: JSON.stringify(responsePayload),
-      },
-    });
+    try {
+      await prisma.aiAuditLog.create({
+        data: {
+          idempotency_key: idempotencyKey,
+          source: responsePayload.source,
+          endpoint: '/api/ai/ingest',
+          parser,
+          raw_transcript: raw_transcript ?? transcript ?? null,
+          parsed_actions: JSON.stringify(actionsToRun),
+          status_code: 201,
+          response_message: execution.message,
+          response_payload: JSON.stringify(responsePayload),
+        },
+      });
+    } catch (auditWriteErr) {
+      console.warn('[GRanch Ingest] Could not write ai_audit_logs entry:', auditWriteErr);
+    }
 
     return NextResponse.json(responsePayload, { status: 201 });
   } catch (err) {
